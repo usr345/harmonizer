@@ -1,19 +1,18 @@
-%-*- mode: prolog-*-
 :- use_module(library(clpfd)).
 
-note_less(note(A, _), note(B, _)) :- A #< B.
-note_less(note(A, C), note(A, D)) :- C #< D.
-note_le(A, A).
-note_le(A, B) :- nole_less(A, B).
+stage_less(note(Octave1, _), note(Octave2, _)) :- Octave1 #< Octave2.
+stage_less(note(Octave, Stage1), note(Octave, Stage2)) :- Stage1 #< Stage2.
+stage_le(Stage1, Stage1).
+stage_le(Stage1, Stage2) :- stage_less(Stage1, Stage2).
 
-oct_up(note(A, B), note(C, B)) :- C #= A + 1.
+oct_up(note(Octave1, Stage), note(Octave2, Stage)) :- Octave2 #= Octave1 + 1.
 
-nearest(note(A, B), note(C, D)) :-  C #= A - 1, B #< D.
-nearest(note(A, B), note(C, B)) :-  C #= A - 1.
-nearest(note(A, B), note(A, D)) :-  B #> D.
+nearest_down(note(Octave1, Stage1), note(Octave2, Stage2)) :-  Octave2 #= Octave1 - 1, Stage1 #< Stage2.
+nearest_down(note(Octave1, Stage), note(Octave2, Stage)) :-  Octave2 #= Octave1 - 1.
+nearest_down(note(Octave, Stage1), note(Octave, Stage2)) :-  Stage1 #> Stage2.
 
-nearests([], []).
-nearests([A|AS], [B|BS]) :- nearest(A, B), nearests(AS, BS).
+nearests_down([], []).
+nearests_down([NoteA|ATail], [NoteB|BTail]) :- nearest_down(NoteA, NoteB), nearests_down(ATail, BTail).
 
 % принадлежит ли элемент списку
 in_list(N, [N|_]).
@@ -31,43 +30,49 @@ xnext(N, [N], A, A).
 rnext(N, [L | T], A) :- xnext(N, [L | T], A, L).
 
 % По типу аккорда возвращает список нот
-dall(ta, [1, 3, 5]).
-dall(da, [5, 7, 2]).
-dall(sa, [4, 6, 1]).
+% ta - тоника
+% da - доминанта
+% sa - субдоминанта
+chord_stages(ta, [1, 3, 5]).
+chord_stages(da, [5, 7, 2]).
+chord_stages(sa, [4, 6, 1]).
 
-% нота содержится в аккорде
-tds(N, ta) :- in_list(N, [1, 3, 5]).
-tds(N, da) :- in_list(N, [5, 7, 2]).
-tds(N, sa) :- in_list(N, [4, 6, 1]).
+% ступень содержится в аккорде
+is_in_chord(N, Chord) :- chord_stages(Chord, X), in_list(N, X).
 
 % первая нота аккорда
-first(1, ta).
-first(5, da).
-first(4, sa).
+% TODO: определить через chord_stages
+chord_tonic(1, ta).
+chord_tonic(5, da).
+chord_tonic(4, sa).
 
-% 2-я нота
-% N1 - верхняя нота
-% TDS - тип аккорда
-% N2 - нижняя нота
-% wide/narrow - тип аккорда
-n2(N1, TDS, N2, wide) :- dall(TDS, ARR), rnext(N1, ARR, N2).
-n2(N1, TDS, N2, narrow) :- dall(TDS, ARR), rnext(N2, ARR, N1).
+% 2-я ступень
+% wide/narrow - широкий\узкий аккорд
+chord_third(UpperStage, ChordTonicStage, LowerStage, wide) :- chord_stages(ChordTonicStage, ChordStages), rnext(UpperStage, ChordStages, LowerStage).
+chord_third(UpperStage, ChordTonicStage, LoweStage, narrow) :- chord_stages(ChordTonicStage, ChordStages), rnext(LoweStage, ChordStages, UpperStage).
 
-harm1(N1, TDS, N2, N3, N4, W) :- in_list(TDS, [ta, sa, da]), in_list(W, [wide, narrow]), tds(N1, TDS), first(N4, TDS), n2(N1, TDS, N2, W), n2(N2, TDS, N3, W).
+% кусок бизнес-логики
+%
+harm1(Stage1, ChordTonicStage, Stage2, Stage3, Stage4, ChordArrangement) :- in_list(ChordTonicStage, [ta, sa, da]),
+                                                                            in_list(ChordArrangement, [wide, narrow]),
+                                                                            is_in_chord(Stage1, ChordTonicStage),
+                                                                            chord_tonic(Stage4, ChordTonicStage),
+                                                                            chord_third(Stage1, ChordTonicStage, Stage2, ChordArrangement),
+                                                                            chord_third(Stage2, ChordTonicStage, Stage3, ChordArrangement).
 
 % разрешенные последовательности аккордов
-nexttds(sa, ta).
-nexttds(sa, sa).
-nexttds(sa, da).
-nexttds(da, ta).
-nexttds(da, da).
-nexttds(ta, sa).
-nexttds(ta, da).
-nexttds(ta, ta).
+possible_next_chord(sa, ta).
+possible_next_chord(sa, sa).
+possible_next_chord(sa, da).
+possible_next_chord(da, ta).
+possible_next_chord(da, da).
+possible_next_chord(ta, sa).
+possible_next_chord(ta, da).
+possible_next_chord(ta, ta).
 
 harm_stages([N1, NN1 | NS1], [TDS, TDSN | TDSS], [N2, NN2 | NS2], [N3, NN3 | NS3], [N4, NN4 | NS4], [W, WN | WS]) :-
    harm1(N1, TDS, N2, N3, N4, W),
-   nexttds(TDS, TDSN),
+   possible_next_chord(TDS, TDSN),
    harm_stages([NN1 | NS1], [TDSN | TDSS], [NN2 | NS2], [NN3 | NS3], [NN4 | NS4], [WN | WS]).
 harm_stages([N1], [TDS], [N2], [N3], [N4], [W]) :-
    harm1(N1, TDS, N2, N3, N4, W).
@@ -75,33 +80,33 @@ harm_stages([N1], [TDS], [N2], [N3], [N4], [W]) :-
 stages([], []).
 stages([note(_, N) | T], [N | TS]) :- stages(T, TS).
 
-nne(A, B) :- note_less(A, B).
-nne(A, B) :- note_less(B, A).
+nne(A, B) :- stage_less(A, B).
+nne(A, B) :- stage_less(B, A).
 
 dirs1(A1, B1, C1, A2, B2, C2) :-
-   note_less(A1, A2),
-   note_less(B1, B2),
-   note_less(C2, C1).
+   stage_less(A1, A2),
+   stage_less(B1, B2),
+   stage_less(C2, C1).
 dirs1(A1, B1, C1, A2, B2, C2) :-
-   note_less(A1, A2),
-   note_less(C1, C2),
-   note_less(B2, B1).
+   stage_less(A1, A2),
+   stage_less(C1, C2),
+   stage_less(B2, B1).
 dirs1(A1, B1, C1, A2, B2, C2) :-
-   note_less(C1, C2),
-   note_less(B1, B2),
-   note_less(A2, A1).
+   stage_less(C1, C2),
+   stage_less(B1, B2),
+   stage_less(A2, A1).
 dirs1(A1, B1, C1, A2, B2, C2) :-
-   note_less(A2, A1),
-   note_less(B2, B1),
-   note_less(C1, C2).
+   stage_less(A2, A1),
+   stage_less(B2, B1),
+   stage_less(C1, C2).
 dirs1(A1, B1, C1, A2, B2, C2) :-
-   note_less(A2, A1),
-   note_less(B1, B2),
-   note_less(C2, C1).
+   stage_less(A2, A1),
+   stage_less(B1, B2),
+   stage_less(C2, C1).
 dirs1(A1, B1, C1, A2, B2, C2) :-
-   note_less(A1, A2),
-   note_less(B2, B1),
-   note_less(C2, C1).
+   stage_less(A1, A2),
+   stage_less(B2, B1),
+   stage_less(C2, C1).
 dirs1(A, _, _, A, _, _).
 dirs1(A1, B, _, A2, B, _) :- nne(A1, A2).
 dirs1(A1, B1, C, A2, B2, C) :- nne(B1, B2), nne(A1, A2).
@@ -139,7 +144,7 @@ harm(N1, TDS, N2, N3, N4, W) :-
    stages(N4, NN4),
    harm_stages(NN1, TDS, NN2, NN3, NN4, W),
    wnswitch(TDS, W),
-   nearests(N1, N2),
-   nearests(N2, N3),
-   nearests(N3, N4),
+   nearests_down(N1, N2),
+   nearests_down(N2, N3),
+   nearests_down(N3, N4),
    dirs(N2, N3, N4).
