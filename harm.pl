@@ -14,10 +14,6 @@ nearest_down(note(Octave, Stage1), note(Octave, Stage2)) :-  Stage1 #> Stage2.
 nearests_down([], []).
 nearests_down([NoteA|ATail], [NoteB|BTail]) :- nearest_down(NoteA, NoteB), nearests_down(ATail, BTail).
 
-% принадлежит ли элемент списку
-in_list(N, [N|_]).
-in_list(N, [_|M]) :- in_list(N, M).
-
 % Поиск следующей ноты в зацикленном списке
 % параметры отношения:
 % (нота, [список нот], следующая нота, первый элемент изначального списка)
@@ -38,7 +34,7 @@ chord_stages(da, [5, 7, 2]).
 chord_stages(sa, [4, 6, 1]).
 
 % ступень содержится в аккорде
-is_in_chord(N, Chord) :- chord_stages(Chord, X), in_list(N, X).
+is_in_chord(N, Chord) :- chord_stages(Chord, X), member(N, X).
 
 % первая нота аккорда
 % TODO: определить через chord_stages
@@ -53,8 +49,8 @@ chord_third(UpperStage, ChordTonicStage, LoweStage, narrow) :- chord_stages(Chor
 
 % кусок бизнес-логики
 %
-harm1(Stage1, ChordTonicStage, Stage2, Stage3, Stage4, ChordArrangement) :- in_list(ChordTonicStage, [ta, sa, da]),
-                                                                            in_list(ChordArrangement, [wide, narrow]),
+harm1(Stage1, ChordTonicStage, Stage2, Stage3, Stage4, ChordArrangement) :- member(ChordTonicStage, [ta, sa, da]),
+                                                                            member(ChordArrangement, [wide, narrow]),
                                                                             is_in_chord(Stage1, ChordTonicStage),
                                                                             chord_tonic(Stage4, ChordTonicStage),
                                                                             chord_third(Stage1, ChordTonicStage, Stage2, ChordArrangement),
