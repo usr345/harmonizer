@@ -1,4 +1,5 @@
 :- use_module(library(clpfd)).
+:- use_module(library(musicxml)).
 
 stage_less(note(Octave1, _), note(Octave2, _)) :- Octave1 #< Octave2.
 stage_less(note(Octave, Stage1), note(Octave, Stage2)) :- Stage1 #< Stage2.
@@ -144,3 +145,12 @@ harm(N1, TDS, N2, N3, N4, W) :-
    nearests_down(N2, N3),
    nearests_down(N3, N4),
    dirs(N2, N3, N4).
+
+
+% чтение файла
+
+getNotes([], []).
+getNotes([element(note, _, [element(pitch, _, [element(step, _, [StepChar]), element(octave, _, [OctaveChar]) | _])|_])|Tail], [xnote(Octave, StepChar)|OTail]) :- atom_number(OctaveChar, Octave), getNotes(Tail, OTail), !.
+getNotes([_|Tail], OTail) :- getNotes(Tail, OTail).
+
+readMXML(File, XNotes) :- musicxml_score(File, element(_, _, S)), member(element(part, _, P), S), member(element(measure, _, M), P), getNotes(M, XNotes).
