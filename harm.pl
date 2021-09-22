@@ -150,8 +150,8 @@ harm(N1, TDS, N2, N3, N4, W) :-
 % чтение файла
 
 getAlter(MNote, Alter) :-
-       member(element(alter, _, [Alter]), MNote), !.
-getAlter(_, '0').
+       member(element(alter, _, [AlterChar]), MNote), atom_number(AlterChar, Alter), !.
+getAlter(_, 0).
 
 getNote(MNote, xnote(Octave, StepChar, Alter)) :-
        member(element(step, _, [StepChar]), MNote),
@@ -165,4 +165,8 @@ getNotes([element(note, _, [element(pitch, _, MNote) | _])|Tail], [XNote|OTail])
        getNotes(Tail, OTail), !.
 getNotes([_|Tail], OTail) :- getNotes(Tail, OTail).
 
-readMXML(File, XNotes) :- musicxml_score(File, element(_, _, S)), member(element(part, _, P), S), member(element(measure, _, M), P), getNotes(M, XNotes).
+readMXML(File, XNotes) :-
+       musicxml_score(File, element(_, _, S)),
+       member(element(part, _, P), S),
+       member(element(measure, _, M), P),
+       getNotes(M, XNotes).
