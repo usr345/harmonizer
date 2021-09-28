@@ -165,8 +165,12 @@ getNotes([element(note, _, [element(pitch, _, MNote) | _])|Tail], [XNote|OTail])
        getNotes(Tail, OTail), !.
 getNotes([_|Tail], OTail) :- getNotes(Tail, OTail).
 
+getElements(_, [], []).
+getElements(E, [element(E, _, M) | T], MO) :- getElements(E, T, MT), append(M, MT, MO), !.
+getElements(E, [_|T], MO) :- getElements(E, T, MO).
+
 readMXML(File, XNotes) :-
        musicxml_score(File, element(_, _, S)),
-       member(element(part, _, P), S),
-       member(element(measure, _, M), P),
+       getElements(part, S, P),
+       getElements(measure, P, M),
        getNotes(M, XNotes).
