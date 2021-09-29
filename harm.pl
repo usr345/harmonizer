@@ -169,8 +169,21 @@ getElements(_, [], []).
 getElements(E, [element(E, _, M) | T], MO) :- getElements(E, T, MT), append(M, MT, MO), !.
 getElements(E, [_|T], MO) :- getElements(E, T, MO).
 
-readMXML(File, XNotes) :-
+shift('C', 0).
+shift('D', 2).
+shift('E', 4).
+shift('F', 5).
+shift('G', 7).
+shift('A', 9).
+shift('B', 11).
+
+altitude(xnote(O, N, A), H) :- shift(N, D), H #= (O * 12) + D + A.
+altitudes([], []).
+altitudes([A|AS], [O|OS]) :- altitude(A, O), altitudes(AS, OS).
+
+readMXML(File, XNotes, Alts) :-
        musicxml_score(File, element(_, _, S)),
        getElements(part, S, P),
        getElements(measure, P, M),
-       getNotes(M, XNotes).
+       getNotes(M, XNotes),
+       altitudes(XNotes, Alts).
