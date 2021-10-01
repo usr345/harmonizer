@@ -1,4 +1,4 @@
-:- use_module(library(clpfd)).
+﻿:- use_module(library(clpfd)).
 :- use_module(library(musicxml)).
 
 stage_less(note(Octave1, _), note(Octave2, _)) :- Octave1 #< Octave2.
