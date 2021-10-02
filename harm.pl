@@ -143,8 +143,7 @@ tne(ta, sa).
 wnswitch([_], [_]).
 wnswitch([A, A | TS], [wide, narrow | WS]) :- wnswitch([A | TS], [narrow | WS]).
 wnswitch([A, A | TS], [narrow, wide | WS]) :- wnswitch([A | TS], [wide | WS]).
-wnswitch([A, B | TS], [W, W | WS]) :- tne(A, B),
-                                      wnswitch([B | TS], [W | WS]).
+wnswitch([_, B | TS], [W, W | WS]) :- wnswitch([B | TS], [W | WS]).
 
 same_length([], []).
 same_length([_|A], [_|B]) :- same_length(A,B).
@@ -189,8 +188,39 @@ getElements(_, [], []).
 getElements(E, [element(E, _, M) | T], MO) :- getElements(E, T, MT), append(M, MT, MO), !.
 getElements(E, [_|T], MO) :- getElements(E, T, MO).
 
-readMXML(File, XNotes) :-
+shift('C', 0).
+shift('D', 2).
+shift('E', 4).
+shift('F', 5).
+shift('G', 7).
+shift('A', 9).
+shift('B', 11).
+
+altitude(xnote(O, N, A), H) :- shift(N, D), H #= (O * 12) + D + A.
+altitudes([], []).
+altitudes([A|AS], [O|OS]) :- altitude(A, O), altitudes(AS, OS).
+
+altitude2note(S, T, A, note(O, N)) :-
+	X #= mod(A - S, 12),
+	member(stage(X, N), T),
+	O #= div(A - S, 12).
+altitudes2notes(_, _, [], []).
+altitudes2notes(S, T, [A|AS], [N|NS]) :- altitude2note(S, T, A, N), altitudes2notes(S, T, AS, NS).
+
+tons(maj, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)]).
+
+readMXML(File, XNotes, Alts) :-
        musicxml_score(File, element(_, _, S)),
        getElements(part, S, P),
        getElements(measure, P, M),
-       getNotes(M, XNotes).
+       getNotes(M, XNotes),
+       altitudes(XNotes, Alts).
+
+readNotes(File, S, T, Notes) :-
+       readMXML(File, _, Alts),
+       tons(T, L),
+       altitudes2notes(S, L, Alts, Notes).
+
+harmFile(File, S, T, N1, N2, N3, N4, C, W) :-
+     readNotes(File, S, T, N1),
+     harm(N1, C, N2, N3, N4, W).
