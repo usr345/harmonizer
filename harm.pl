@@ -7,6 +7,9 @@ stage_less(note(Octave, Stage1), note(Octave, Stage2)) :- Stage1 #< Stage2.
 stage_le(Stage1, Stage1).
 stage_le(Stage1, Stage2) :- stage_less(Stage1, Stage2).
 
+notes_ne(note(Octave1, _), note(Octave2, _)) :- Octave1 #\= Octave2.
+notes_ne(note(Octave, Stage1), note(Octave, Stage2)) :- Stage1 #\= Stage2.
+
 oct_up(note(Octave1, Stage), note(Octave2, Stage)) :- Octave2 #= Octave1 + 1.
 
 % у нас есть нота
@@ -95,8 +98,23 @@ harm_stages([N1, NN1 | NS1], [TDS, TDSN | TDSS], [N2, NN2 | NS2], [N3, NN3 | NS3
 stages([], []).
 stages([note(_, N) | T], [N | TS]) :- stages(T, TS).
 
-nne(A, B) :- stage_less(A, B).
-nne(A, B) :- stage_less(B, A).
+% Пусть нам даны 2 голоса, ноты с октавами.
+% Мы берем 2 соседних аккорда, и проверяем, что ноты не идут в одну сторону.
+% В одну сторону означает, что N1_2 < N1_1 & N2_2 < N2_2
+% N1_1 - 1-й голос 1-я нота
+% N1_2 - 1-й голос 2-я нота
+% N2_1 - 2-й голос 1-я нота
+% N2_2 - 2-й голос 2-я нота
+not_one(N, N, _, _).
+not_one(_, _, N, N).
+not_one(N1_1, N1_2, N2_1, N2_2) :- stage_less(N1_1, N1_2), not(stage_less(N2_1, N2_2)).
+not_one(N1_1, N1_2, N2_1, N2_2) :- not(stage_less(N1_1, N1_2)), stage_less(N2_1, N2_2).
+
+% У нас есть 2 массива нот, отображающие 2 последовательных аккорда с нотами для каждого голоса
+% Предикат возвращает true, если существует
+sub_sign(A, B, C) :- C is sign(A - B).
+%% maplist(sub_sign,[1,2,3],[3,2,1],C).
+
 
 % все голоса не могут идти в одну сторону
 dirs1(A1, B1, C1, A2, B2, C2) :-
@@ -124,8 +142,8 @@ dirs1(A1, B1, C1, A2, B2, C2) :-
    stage_less(B2, B1),
    stage_less(C2, C1).
 dirs1(A, _, _, A, _, _).
-dirs1(A1, B, _, A2, B, _) :- nne(A1, A2).
-dirs1(A1, B1, C, A2, B2, C) :- nne(B1, B2), nne(A1, A2).
+dirs1(A1, B, _, A2, B, _) :- notes_ne(A1, A2).
+dirs1(A1, B1, C, A2, B2, C) :- notes_ne(B1, B2), notes_ne(A1, A2).
 
 dirs([_], [_], [_]).
 dirs([A1, A2 | AS], [B1, B2 | BS], [C1, C2 | CS]) :-
