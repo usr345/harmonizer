@@ -114,6 +114,8 @@ not_one(N1_1, N1_2, N2_1, N2_2) :- not(stage_less(N1_1, N1_2)), stage_less(N2_1,
 % Предикат возвращает true, если существует
 sub_sign(A, B, C) :- C is sign(A - B).
 %% maplist(sub_sign,[1,2,3],[3,2,1],C).
+not_all([X|T]) :- \+ maplist(==(X), T).
+%% maplist(sub_sign,[1,2,3],[4,5,5],C), not_all(C).
 
 
 % все голоса не могут идти в одну сторону
