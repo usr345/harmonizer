@@ -1,4 +1,5 @@
-﻿:- use_module(library(clpfd)).
+%-*- mode: prolog-*-
+:- use_module(library(clpfd)).
 :- use_module(library(musicxml)).
 
 stage_less(note(Octave1, _), note(Octave2, _)) :- Octave1 #< Octave2.
@@ -9,6 +10,8 @@ stage_le(Stage1, Stage2) :- stage_less(Stage1, Stage2).
 
 oct_up(note(Octave1, Stage), note(Octave2, Stage)) :- Octave2 #= Octave1 + 1.
 
+% у нас есть нота
+% по ноте и другой ноте, у которой не задана октава, он подбирает октаву так, чтобы он была ближе всего
 nearest_down(note(Octave1, Stage1), note(Octave2, Stage2)) :-  Octave2 #= Octave1 - 1, Stage1 #< Stage2.
 nearest_down(note(Octave1, Stage), note(Octave2, Stage)) :-  Octave2 #= Octave1 - 1.
 nearest_down(note(Octave, Stage1), note(Octave, Stage2)) :-  Stage1 #> Stage2.
@@ -38,17 +41,21 @@ interval_le(X, Y) :- interval_less(X, Y).
 nearests_down([], []).
 nearests_down([NoteA|ATail], [NoteB|BTail]) :- nearest_down(NoteA, NoteB), nearests_down(ATail, BTail).
 
-% Поиск следующей ноты в зацикленном списке
+% данное отношение является вспомогательным для rnext
+% Поиск следующего элемента в зацикленном списке
 % параметры отношения:
-% (нота, [список нот], следующая нота, первый элемент изначального списка)
+% (элемент, [список], следующий элемент, первый элемент изначального списка)
 xnext(N, [N, A | _], A, _).
 xnext(N, [_ , X | M], A, F) :- xnext(N, [X | M], A, F).
-% если ноту нашли последней, то она соседняя с первой
+% Последний элемент соседний с первым
 xnext(N, [N], A, A).
 
-% Следующая нота в циклическом списке
-rnext(N, [L | T], A) :- xnext(N, [L | T], A, L).
 
+% Следующий элемент в циклическом списке
+rnext(N, [H | T], A) :- xnext(N, [H | T], A, H).
+
+% разрешенные названия аккордов
+chord_types([ta, da, sa]).
 % По типу аккорда возвращает список нот
 % ta - тоника
 % da - доминанта
@@ -60,42 +67,53 @@ chord_stages(sa, [4, 6, 1]).
 % ступень содержится в аккорде
 is_in_chord(N, Chord) :- chord_stages(Chord, X), member(N, X).
 
-% первая нота аккорда
-% TODO: определить через chord_stages
-chord_tonic(1, ta).
-chord_tonic(5, da).
-chord_tonic(4, sa).
+% Прима аккорда
+chord_primo(X, Chord) :- chord_stages(Chord, [X | _]).
 
-% 2-я ступень
-% wide/narrow - широкий\узкий аккорд
-chord_third(UpperStage, ChordTonicStage, LowerStage, wide) :- chord_stages(ChordTonicStage, ChordStages), rnext(UpperStage, ChordStages, LowerStage).
-chord_third(UpperStage, ChordTonicStage, LoweStage, narrow) :- chord_stages(ChordTonicStage, ChordStages), rnext(LoweStage, ChordStages, UpperStage).
+% соседние ноты в аккорде
+% UpperStage: верхняя нота
+% ChordType: {ta, da, sa}
+% LowerStage: нижняя нота
+% wide/narrow - широкое\тесное расположение
+chord_neighbours(UpperStage, ChordType, LowerStage, wide) :- chord_stages(ChordType, ChordStages), rnext(UpperStage, ChordStages, LowerStage).
+chord_neighbours(UpperStage, ChordType, LowerStage, narrow) :- chord_stages(ChordType, ChordStages), rnext(LowerStage, ChordStages, UpperStage).
 
-% кусок бизнес-логики
-%
-harm1(Stage1, ChordTonicStage, Stage2, Stage3, Stage4, ChordArrangement) :- member(ChordTonicStage, [ta, sa, da]),
-                                                                            member(ChordArrangement, [wide, narrow]),
-                                                                            is_in_chord(Stage1, ChordTonicStage),
-                                                                            chord_tonic(Stage4, ChordTonicStage),
-                                                                            chord_third(Stage1, ChordTonicStage, Stage2, ChordArrangement),
-                                                                            chord_third(Stage2, ChordTonicStage, Stage3, ChordArrangement).
+% Гармонизация 4-х нот по типу аккорда, расположению (широкий, тесный) и одной известной ноте
+% Stage1 - верхняя нота
+% ChordType - тип аккорда
+% Stage2
+% Stage3
+% Stage4 - бас
+% ChordArrangement: {wide, narrow}
+harm1(Stage1, ChordType, Stage2, Stage3, Stage4, ChordArrangement) :-
+    chord_types(AllowedChordTypes),
+    member(ChordType, AllowedChordTypes),
+    member(ChordArrangement, [wide, narrow]),
+    is_in_chord(Stage1, ChordType),
+    chord_primo(Stage4, ChordType),
+    chord_neighbours(Stage1, ChordType, Stage2, ChordArrangement),
+    chord_neighbours(Stage2, ChordType, Stage3, ChordArrangement).
 
 % разрешенные последовательности аккордов
-possible_next_chord(sa, ta).
-possible_next_chord(sa, sa).
-possible_next_chord(sa, da).
-possible_next_chord(da, ta).
-possible_next_chord(da, da).
-possible_next_chord(ta, sa).
-possible_next_chord(ta, da).
-possible_next_chord(ta, ta).
+% После T и S может быть всё, что угодно.
+possible_next_chord(X, Y) :- member(X, [ta, sa]),
+                             chord_types(AllowedChordTypes),
+                             member(Y, AllowedChordTypes).
+
+% запрещен ход D - S
+possible_next_chord(da, Y) :- member(Y, [da, ta]).
+
+% Гармонизация списков нот, аккордов и расположений.
+% По заданному списку нот. Как правило, это будет либо [N1] - сопрано,
+% либо - [N4] - бас.
+% Возвращает списки нот оставшихся 3-х голосов, типы аккордов, и их расположение.
+harm_stages([N1], [TDS], [N2], [N3], [N4], [W]) :-
+   harm1(N1, TDS, N2, N3, N4, W).
 
 harm_stages([N1, NN1 | NS1], [TDS, TDSN | TDSS], [N2, NN2 | NS2], [N3, NN3 | NS3], [N4, NN4 | NS4], [W, WN | WS]) :-
    harm1(N1, TDS, N2, N3, N4, W),
    possible_next_chord(TDS, TDSN),
    harm_stages([NN1 | NS1], [TDSN | TDSS], [NN2 | NS2], [NN3 | NS3], [NN4 | NS4], [WN | WS]).
-harm_stages([N1], [TDS], [N2], [N3], [N4], [W]) :-
-   harm1(N1, TDS, N2, N3, N4, W).
 
 stages([], []).
 stages([note(_, N) | T], [N | TS]) :- stages(T, TS).
@@ -103,6 +121,7 @@ stages([note(_, N) | T], [N | TS]) :- stages(T, TS).
 nne(A, B) :- stage_less(A, B).
 nne(A, B) :- stage_less(B, A).
 
+% все голоса не могут идти в одну сторону
 dirs1(A1, B1, C1, A2, B2, C2) :-
    stage_less(A1, A2),
    stage_less(B1, B2),
@@ -142,6 +161,7 @@ tne(sa, ta).
 tne(sa, da).
 tne(ta, da).
 tne(ta, sa).
+
 
 wnswitch([_], [_]).
 wnswitch([A, A | TS], [wide, narrow | WS]) :- wnswitch([A | TS], [narrow | WS]).
@@ -486,9 +506,5 @@ readNotes(File, S, T, Notes) :-
 harmFile(File, S, T, N1, N2, N3, N4, C, W) :-
      readNotes(File, S, T, N1),
      harm(N1, C, N2, N3, N4, W).
-
-
-
-
 
 
