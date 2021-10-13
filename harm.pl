@@ -4,9 +4,6 @@
 stage_less(note(Octave1, _), note(Octave2, _)) :- Octave1 #< Octave2.
 stage_less(note(Octave, Stage1), note(Octave, Stage2)) :- Stage1 #< Stage2.
 
-stage_less(note(Octave1, _, _), note(Octave2, _, _)) :- Octave1 #< Octave2.
-stage_less(note(Octave, Stage1, _), note(Octave, Stage2, _)) :- Stage1 #< Stage2.
-stage_less(note(Octave, Stage, Alter1), note(Octave, Stage, Alter2)) :- Alter1 #< Alter2.
 stage_le(Stage1, Stage1).
 stage_le(Stage1, Stage2) :- stage_less(Stage1, Stage2).
 
@@ -24,11 +21,11 @@ stage_pitch(4, 7).
 stage_pitch(5, 9).
 stage_pitch(6, 11).
 
-abs_pitch(note(Octave, Stage, Alter), Pitch) :- stage_pitch(Stage, StagePitch), Pitch #= Octave * 12 + StagePitch + Alter.
+abs_pitch(pitch(Octave, Stage, Alter), Pitch) :- stage_pitch(Stage, StagePitch), Pitch #= Octave * 12 + StagePitch + Alter.
 
-note_sub(note(Octave1, Stage1, Alter1), note(Octave2, Stage2, Alter2), interval(Stage, Semitones)) :-
-   abs_pitch(note(Octave1, Stage1, Alter1), Pitch1),
-   abs_pitch(note(Octave2, Stage2, Alter2), Pitch2),
+note_sub(pitch(Octave1, Stage1, Alter1), pitch(Octave2, Stage2, Alter2), interval(Stage, Semitones)) :-
+   abs_pitch(pitch(Octave1, Stage1, Alter1), Pitch1),
+   abs_pitch(pitch(Octave2, Stage2, Alter2), Pitch2),
    Stage #= Octave1 * 7 + Stage1 - Octave2 * 7 - Stage2,
    Semitones #= Pitch1 - Pitch2.
 
@@ -37,8 +34,6 @@ add_interval(Note1, Interval, Note2) :- note_sub(Note2, Note1, Interval).
 interval_less(interval(_, Semi1), interval(_, Semi2)) :- Semi1 #< Semi2.
 interval_le(X, X).
 interval_le(X, Y) :- interval_less(X, Y).
-
-nearest_down(Note1, Note2) :- note_sub(Note1, Note2, Interval), interval_less(interval(0,0), Interval), interval_le(Interval, interval(7, 12)).
 
 nearests_down([], []).
 nearests_down([NoteA|ATail], [NoteB|BTail]) :- nearest_down(NoteA, NoteB), nearests_down(ATail, BTail).
@@ -180,12 +175,6 @@ getAlter(MNote, Alter) :-
        member(element(alter, _, [AlterChar]), MNote), atom_number(AlterChar, Alter), !.
 getAlter(_, 0).
 
-getNote(MNote, xnote(Octave, StepChar, Alter)) :-
-       member(element(step, _, [StepChar]), MNote),
-       member(element(octave, _, [OctaveChar]), MNote),
-       atom_number(OctaveChar, Octave),
-       getAlter(MNote, Alter).
-
 evalExpr(X, NX) :- NX #= X.
 
 getVoice('1', '1', 1).
@@ -209,10 +198,16 @@ readPitch(P, Octave, StepChar, Alter) :-
 appendNote(Elem, Ts, Voice, Duration, Tail, DstList) :-
        member(element(pitch, _, P), Elem),
        readPitch(P, Octave, Step, Alter),
-       append([note(Ts, voice(Voice), duration(Duration), pitch(Octave, Step, Alter))], Tail, DstList ).
+       append([xml_note(Ts, voice(Voice), duration(Duration), pitch(Octave, Step, Alter))], Tail, DstList ).
 
 appendNote(_, _, _, _, Tail, DstList) :-
        DstList = Tail.
+
+getNote(MNote, xnote(Octave, StepChar, Alter)) :-
+       member(element(step, _, [StepChar]), MNote),
+       member(element(octave, _, [OctaveChar]), MNote),
+       atom_number(OctaveChar, Octave),
+       getAlter(MNote, Alter).
 
 getNotes([], _, _, [], _).
 
@@ -281,13 +276,13 @@ applyScale(maj, Stage, Alter, Key) :-
        Key = key(Stage, Alter, maj), !.
 
 applyScale(min, Stage, Alter, Key) :-
-       add_interval(note(0, Stage, Alter), interval(-2, -3), note(_, NewStage, NewAlter)),
+       add_interval(pitch(0, Stage, Alter), interval(-2, -3), pitch(_, NewStage, NewAlter)),
        Key = key(NewStage, NewAlter, min), !.
 
 parseKey(Scale, Fifth, Key) :-
        Stage #= (Fifth * 4) mod 7,
        Octave #= (Fifth * 4) div 7,
-       abs_pitch(note(Octave, Stage, Alter), Fifth * 7),
+       abs_pitch(pitch(Octave, Stage, Alter), Fifth * 7),
        applyScale(Scale, Stage, Alter, Key), !.
 
 parseBeats(RawBeats, BeatType, Beats) :-
@@ -332,7 +327,7 @@ scaleStageInterval(min, Stage, Interval) :-
 % в ноту Stage2, Alter2
 noteInKey(key(KeyStage, KeyAlter, KeyScale), Stage1, Alter1, Stage2, Alter2) :-
        scaleStageInterval(KeyScale, Stage1, Interval),
-       add_interval(note(1, KeyStage, KeyAlter + Alter1), Interval, note(_, Stage2, Alter2)).
+       add_interval(pitch(1, KeyStage, KeyAlter + Alter1), Interval, pitch(_, Stage2, Alter2)).
 
 % Конвертируем сырой питч в ступень тональности с альтерацией и октавой
 convertPitch(pitch(Octave1, Stage1, Alter1), key(KeyStage, KeyAlter, KeyScale), stage(Octave2, Stage2, Alter2)) :-
@@ -341,13 +336,12 @@ convertPitch(pitch(Octave1, Stage1, Alter1), key(KeyStage, KeyAlter, KeyScale), 
        % находим октаву
        convOctave(Stage1Num, Stage2, Octave1, Octave2),
        % находим Alter2
-       noteInKey(key(KeyStage, KeyAlter, KeyScale), Stage2, Alter2, Stage1Num, Alter1)
-       .
+       noteInKey(key(KeyStage, KeyAlter, KeyScale), Stage2, Alter2, Stage1Num, Alter1).
 
 getMusicFromXML(File, Scale, Notes, music_attrs(Key, Beats)) :-
        musicxml_score(File,element(_, _, C)), getElements(part, C, P), getNotesFromMeasures(P, 0, Notes, Fifth, Beats, _), parseKey(Scale, Fifth, Key).
 
-tsListRaw([note(Ts, _, _, _) | Tail], TsList) :-
+tsListRaw([xml_note(Ts, _, _, _) | Tail], TsList) :-
        tsListRaw(Tail, LR),
        append([Ts], LR, TsList), !.
 
@@ -357,12 +351,8 @@ tsList(Notes, TsList) :-
        tsListRaw(Notes, TsListRaw),
        sort(TsListRaw, TsList), !.
 
-tsIndex(Notes, Ts, Index) :-
-       tsList(Notes, TsList),
-       nth0(Index, TsList, Ts), !.
-
 % [Chord(Pitches, Ts, Dur), ChordsTail]
-forceVoices(Key, TsList, [note(Ts, voice(Voice), Dur, Pitch) | NotesTail], Chords) :-
+forceVoices(Key, TsList, [xml_note(Ts, voice(Voice), Dur, Pitch) | NotesTail], Chords) :-
        nth0(Index, TsList, Ts),
        nth0(Index, Chords, chord(Stages, Ts, Dur, type(_))),
        Stages = [_,_,_,_],
@@ -405,11 +395,35 @@ checkChordPairs(Attrs, [Chord1, Chord2 | Rest]) :-
 
 checkChordPairs(_, [_]).
 
+checkCorrectAlter(_, 0, 0).
+checkCorrectAlter(_, 1, 0).
+checkCorrectAlter(_, 2, 0).
+checkCorrectAlter(_, 3, 0).
+checkCorrectAlter(_, 4, 0).
+checkCorrectAlter(_, 5, 0).
+checkCorrectAlter(maj, 6, 0).
+checkCorrectAlter(min, 6, 1).
+
+checkCorrectAlters(Scale, [chord([stage(_, S1, A1), stage(_, S2, A2), stage(_, S3, A3), stage(_, S4, A4)], _, _, _) | Tail ]) :-
+   checkCorrectAlter(Scale, S1, A1),
+   checkCorrectAlter(Scale, S2, A2),
+   checkCorrectAlter(Scale, S3, A3),
+   checkCorrectAlter(Scale, S4, A4),
+   checkCorrectAlters(Scale, Tail).
+
+checkCorrectAlters(_, []).
+
 convertMusicFormat([(O1, S1) | Tail1], [(O2, S2) | Tail2], [(O3, S3) | Tail3], [(O4, S4) | Tail4],
                    [chord([stage(O1, S1, A1), stage(O2, S2, A2), stage(O3, S3, A3), stage(O4, S4, A4)], _, _, _) | Tail ]) :-
     convertMusicFormat(Tail1, Tail2, Tail3, Tail4, Tail).
 
 convertMusicFormat([], [], [], [], []).
+
+% конвертировать разные форматы друг в друга, проверяя корректность
+% альтераций
+convertAndCheck(Scale, N1, N2, N3, N4, Chords) :-
+   convertMusicFormat(N1, N2, N3, N4, Chords),
+   checkCorrectAlters(Scale, Chords).
 
 harm2(music_attrs(Key, Beats), Chords) :-
    checkIndividualChords(Key, Chords),
