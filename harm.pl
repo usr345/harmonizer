@@ -22,9 +22,24 @@ notes_cmp(X, Y, 1) :- stage_less(Y, X).
 oct_up(note(Octave1, Stage), note(Octave2, Stage)) :- Octave2 #= Octave1 + 1.
 
 % по ноте и другой ноте, у которой не задана октава, подбирает октаву так, чтобы он была ближе всего
+% предполагается, что нота2 лежит ниже ноты1 в рамках одного аккорда
 nearest_down(note(Octave1, Stage1), note(Octave2, Stage2)) :-  Octave2 #= Octave1 - 1, Stage1 #< Stage2.
 nearest_down(note(Octave1, Stage), note(Octave2, Stage)) :-  Octave2 #= Octave1 - 1.
 nearest_down(note(Octave, Stage1), note(Octave, Stage2)) :-  Stage1 #> Stage2.
+
+% поиск ближайшей нижней ноты с учетом возможности ухода баса вниз на 2 октавы
+nearest_down_bass(note(Octave1, Stage), note(Octave2, Stage)) :- Octave2 #= Octave1 ;
+                                                                 Octave2 #= Octave1 - 1 ;
+                                                                 Octave2 #= Octave1 - 2.
+
+nearest_down_bass(note(Octave1, Stage1), note(Octave2, Stage2)) :-
+    Stage1 #\= Stage2,
+    nearest_down(note(Octave1, Stage1), note(Octave2, Stage2)).
+
+nearest_down_bass(note(Octave1, Stage1), note(Octave2_down, Stage2)) :-
+    Stage1 #\= Stage2,
+    nearest_down(note(Octave1, Stage1), note(Octave2, Stage2)),
+    Octave2_down #= Octave2 - 1.
 
 stage_pitch(0, 0).
 stage_pitch(1, 2).
@@ -50,6 +65,9 @@ interval_le(X, Y) :- interval_less(X, Y).
 
 nearests_down([], []).
 nearests_down([NoteA|ATail], [NoteB|BTail]) :- nearest_down(NoteA, NoteB), nearests_down(ATail, BTail).
+
+nearests_down_bass([], [], []).
+nearests_down_bass([NoteA|ATail], [NoteB|BTail], [Tonica | TonicaTail]) :- nearest_down_bass(NoteA, NoteB, Tonica), nearests_down_bass(ATail, BTail, TonicaTail).
 
 % данное отношение является вспомогательным для rnext
 % Поиск следующего элемента в зацикленном списке
@@ -88,9 +106,9 @@ chord_primo(X, Chord) :- chord_stages(Chord, [X | _]).
 chord_neighbours(UpperStage, ChordType, LowerStage, wide) :- chord_stages(ChordType, ChordStages), rnext(UpperStage, ChordStages, LowerStage).
 chord_neighbours(UpperStage, ChordType, LowerStage, narrow) :- chord_stages(ChordType, ChordStages), rnext(LowerStage, ChordStages, UpperStage).
 
-% Гармонизация 4-х нот по типу аккорда, расположению (широкий, тесный) и одной известной ноте
-% Stage1 - верхняя нота
-% ChordType - тип аккорда
+% Гармонизация 4-х нот по одной известной ноте
+% Stage1: int - верхняя нота (номер ступени)
+% ChordType: {ta, da, sa} - тип аккорда
 % Stage2
 % Stage3
 % Stage4 - бас
@@ -104,6 +122,10 @@ harm1(Stage1, ChordType, Stage2, Stage3, Stage4, ChordArrangement) :-
     chord_neighbours(Stage1, ChordType, Stage2, ChordArrangement),
     chord_neighbours(Stage2, ChordType, Stage3, ChordArrangement).
 
+%% harm1_bass(Stage1, ChordType, Stage2, Stage3, Stage4, ChordArrangement) :-
+%%     harm1(Stage1, ChordType, Stage2, note(Octave1, Stage), Stage4, ChordArrangement),
+%%     oct_down(note(Octave1, Stage), note(Octave2, Stage))
+
 % разрешенные последовательности аккордов
 % После T и S может быть всё, что угодно.
 possible_next_chord(X, Y) :- member(X, [ta, sa]),
@@ -113,7 +135,7 @@ possible_next_chord(X, Y) :- member(X, [ta, sa]),
 % запрещен ход D - S
 possible_next_chord(da, Y) :- member(Y, [da, ta]).
 
-% Гармонизация списков нот, аккордов и расположений.
+% Гармонизация списков нот, аккордов и расположений без учета октав.
 % По заданному списку нот. Как правило, это будет либо [N1] - сопрано,
 % либо - [N4] - бас.
 % Возвращает списки нот оставшихся 3-х голосов, типы аккордов, и их расположение.
@@ -136,7 +158,6 @@ not_all([X | T]) :- \+ maplist(==(X), T).
 not_all_one([N1 | T1], [N2 | T2]) :- maplist(notes_cmp, [N1 | T1], [N2 | T2], Deltas),
                                      not_all(Deltas).
 
-bass_not_more_2oct(note(Octave1, _), note(Octave2, _)) :-
 
 % Аккорды не равны
 tne(da, ta).
@@ -155,21 +176,24 @@ wnswitch([_, B | TS], [W, W | WS]) :- wnswitch([B | TS], [W | WS]).
 same_length([], []).
 same_length([_|A], [_|B]) :- same_length(A,B).
 
+% Гармонизация списков нот в формате note(Октава, Ступень)
 harm(N1, TDS, N2, N3, N4, W) :-
    same_length(N1, TDS),
    same_length(N1, N2),
    same_length(N1, N3),
    same_length(N1, N4),
    same_length(N1, W),
+   % выбираем ноту из пары (октава, нота), игнорируя октаву
    stages(N1, NN1),
    stages(N2, NN2),
    stages(N3, NN3),
    stages(N4, NN4),
+   % без учета октавы
    harm_stages(NN1, TDS, NN2, NN3, NN4, W),
    wnswitch(TDS, W),
    nearests_down(N1, N2),
    nearests_down(N2, N3),
-   nearests_down(N3, N4),
+   nearests_down_bass(N3, N4),
    dirs(N2, N3, N4).
 
 
@@ -473,6 +497,8 @@ altitude2note(S, T, A, note(O, N)) :-
 altitudes2notes(_, _, [], []).
 altitudes2notes(S, T, [A|AS], [N|NS]) :- altitude2note(S, T, A, N), altitudes2notes(S, T, AS, NS).
 
+% соответствие между номером мажорной ступени в хроматической гамме
+% и номером ступени в мажорной тональности
 tons(maj, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)]).
 
 readMXML(File, XNotes, Alts) :-
@@ -482,13 +508,11 @@ readMXML(File, XNotes, Alts) :-
        getNotes(M, XNotes),
        altitudes(XNotes, Alts).
 
-readNotes(File, S, T, Notes) :-
+readNotes(File, Shift, Scale, Notes) :-
        readMXML(File, _, Alts),
-       tons(T, L),
-       altitudes2notes(S, L, Alts, Notes).
+       tons(Scale, List),
+       altitudes2notes(Shift, List, Alts, Notes).
 
 harmFile(File, S, T, N1, N2, N3, N4, C, W) :-
      readNotes(File, S, T, N1),
      harm(N1, C, N2, N3, N4, W).
-
-
