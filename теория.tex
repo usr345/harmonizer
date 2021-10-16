@@ -35,4 +35,19 @@
 
   Параллельные квинты:
 \end{enumerate}
+\begin{minted}[breaklines, breakanywhere, tabsize=2]{prolog}
+?- getMusicFromXML('hello3.xml', maj, Notes, music_attrs(Key, Beats)), getChords(Key, Notes, Chords).
+
+Notes = [note(ts(0, 0), voice(1), duration(240), pitch(4, 'C', 0)), note(ts(0, 240), voice(1), duration(240), pitch(4, 'E', 0)), note(ts(0, 480), voice(1), duration(240), pitch(4, 'G', 0)), note(ts(1, 0), voice(1), duration(240), pitch(4, 'D', 0)), note(ts(1, 240), voice(1), duration(240), pitch(4, 'F', 1)), note(ts(1, 480), voice(1), duration(240), pitch(4, 'B', 0))],
+Key = key(4, 0, maj),
+Beats = beats(3, 720),
+
+Chords = [
+  chord([stage(3, 3, 0), _1008, _1014, _1020], ts(0, 0), duration(240), type(_998)),
+  chord([stage(3, 5, 0), _1428, _1434, _1440], ts(0, 240), duration(240), type(_1418)),
+  chord([stage(4, 0, 0), _3246, _3252, _3258], ts(0, 480), duration(240), type(_3236)),
+  chord([stage(3, 4, 0), _5288, _5294, _5300], ts(1, 0), duration(240), type(_5278)),
+  chord([stage(3, 6, 0), _7348, _7354|...], ts(1, 240), duration(240), type(_7338)),
+  chord([stage(4, 2, 0), _9408|...], ts(1, 480), duration(240), type(_9398))].
+\end{minted}
 \end{document}
