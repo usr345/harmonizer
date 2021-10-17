@@ -34,6 +34,7 @@
   Либо по совпадению ступеней: {\tt note(\_, step1), note(\_, step1)} и в последующем такте: {\tt note(\_, step2), note(\_, step2)}.
 
   Параллельные квинты:
+\item Запрещено перекрещивание голосов.
 \end{enumerate}
 \begin{minted}[breaklines, breakanywhere, tabsize=2]{prolog}
 ?- getMusicFromXML('hello3.xml', maj, Notes, music_attrs(Key, Beats)), getChords(Key, Notes, Chords).

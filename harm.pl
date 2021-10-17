@@ -28,16 +28,12 @@ nearest_down(note(Octave1, Stage), note(Octave2, Stage)) :-  Octave2 #= Octave1 
 nearest_down(note(Octave, Stage1), note(Octave, Stage2)) :-  Stage1 #> Stage2.
 
 % поиск ближайшей нижней ноты с учетом возможности ухода баса вниз на 2 октавы
-nearest_down_bass(note(Octave1, Stage), note(Octave2, Stage)) :- Octave2 #= Octave1 ;
-                                                                 Octave2 #= Octave1 - 1 ;
-                                                                 Octave2 #= Octave1 - 2.
+nearest_down_bass(Bass, Bass).
 
 nearest_down_bass(note(Octave1, Stage1), note(Octave2, Stage2)) :-
-    Stage1 #\= Stage2,
     nearest_down(note(Octave1, Stage1), note(Octave2, Stage2)).
 
 nearest_down_bass(note(Octave1, Stage1), note(Octave2_down, Stage2)) :-
-    Stage1 #\= Stage2,
     nearest_down(note(Octave1, Stage1), note(Octave2, Stage2)),
     Octave2_down #= Octave2 - 1.
 
@@ -84,7 +80,7 @@ rnext(N, [H | T], A) :- xnext(N, [H | T], A, H).
 
 % разрешенные названия аккордов
 chord_types([ta, da, sa]).
-% По типу аккорда возвращает список нот
+% По типу аккорда возвращает список ступеней аккорда: прима, терция, квинта
 % ta - тоника
 % da - доминанта
 % sa - субдоминанта
@@ -107,24 +103,23 @@ chord_neighbours(UpperStage, ChordType, LowerStage, wide) :- chord_stages(ChordT
 chord_neighbours(UpperStage, ChordType, LowerStage, narrow) :- chord_stages(ChordType, ChordStages), rnext(LowerStage, ChordStages, UpperStage).
 
 % Гармонизация 4-х нот по одной известной ноте
-% Stage1: int - верхняя нота (номер ступени)
+% Stage1: int \in [1, 7] - верхняя нота (номер ступени)
 % ChordType: {ta, da, sa} - тип аккорда
-% Stage2
-% Stage3
-% Stage4 - бас
+% Stage2: int \in [1, 7]
+% Stage3: int \in [1, 7]
+% Stage4: int \in [1, 7] - бас
 % ChordArrangement: {wide, narrow}
 harm1(Stage1, ChordType, Stage2, Stage3, Stage4, ChordArrangement) :-
     chord_types(AllowedChordTypes),
     member(ChordType, AllowedChordTypes),
     member(ChordArrangement, [wide, narrow]),
+    % поиск типа аккорда по заданной ступени
     is_in_chord(Stage1, ChordType),
     chord_primo(Stage4, ChordType),
+    % вычисляем следующие ступени
     chord_neighbours(Stage1, ChordType, Stage2, ChordArrangement),
     chord_neighbours(Stage2, ChordType, Stage3, ChordArrangement).
 
-%% harm1_bass(Stage1, ChordType, Stage2, Stage3, Stage4, ChordArrangement) :-
-%%     harm1(Stage1, ChordType, Stage2, note(Octave1, Stage), Stage4, ChordArrangement),
-%%     oct_down(note(Octave1, Stage), note(Octave2, Stage))
 
 % разрешенные последовательности аккордов
 % После T и S может быть всё, что угодно.
@@ -136,16 +131,17 @@ possible_next_chord(X, Y) :- member(X, [ta, sa]),
 possible_next_chord(da, Y) :- member(Y, [da, ta]).
 
 % Гармонизация списков нот, аккордов и расположений без учета октав.
-% По заданному списку нот. Как правило, это будет либо [N1] - сопрано,
-% либо - [N4] - бас.
-% Возвращает списки нот оставшихся 3-х голосов, типы аккордов, и их расположение.
+% По заданному списку нот (как правило, это будет либо [N1] - сопрано,
+% либо - [N4] - бас) возвращает списки нот оставшихся 3-х голосов,
+% типы аккордов, и их расположение.
 harm_stages([N1], [TDS], [N2], [N3], [N4], [W]) :-
    harm1(N1, TDS, N2, N3, N4, W).
 
 harm_stages([N1, NN1 | NS1], [TDS, TDSN | TDSS], [N2, NN2 | NS2], [N3, NN3 | NS3], [N4, NN4 | NS4], [W, WN | WS]) :-
-   harm1(N1, TDS, N2, N3, N4, W),
-   possible_next_chord(TDS, TDSN),
-   harm_stages([NN1 | NS1], [TDSN | TDSS], [NN2 | NS2], [NN3 | NS3], [NN4 | NS4], [WN | WS]).
+    % поиск первого аккорда
+    harm1(N1, TDS, N2, N3, N4, W),
+    possible_next_chord(TDS, TDSN),
+    harm_stages([NN1 | NS1], [TDSN | TDSS], [NN2 | NS2], [NN3 | NS3], [NN4 | NS4], [WN | WS]).
 
 stages([], []).
 stages([note(_, N) | T], [N | TS]) :- stages(T, TS).
