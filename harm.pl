@@ -62,8 +62,8 @@ interval_le(X, Y) :- interval_less(X, Y).
 nearests_down([], []).
 nearests_down([NoteA|ATail], [NoteB|BTail]) :- nearest_down(NoteA, NoteB), nearests_down(ATail, BTail).
 
-nearests_down_bass([], [], []).
-nearests_down_bass([NoteA|ATail], [NoteB|BTail], [Tonica | TonicaTail]) :- nearest_down_bass(NoteA, NoteB, Tonica), nearests_down_bass(ATail, BTail, TonicaTail).
+nearests_down_bass([], []).
+nearests_down_bass([NoteA|ATail], [NoteB|BTail]) :- nearest_down_bass(NoteA, NoteB), nearests_down_bass(ATail, BTail).
 
 % данное отношение является вспомогательным для rnext
 % Поиск следующего элемента в зацикленном списке
@@ -102,7 +102,7 @@ chord_primo(X, Chord) :- chord_stages(Chord, [X | _]).
 chord_neighbours(UpperStage, ChordType, LowerStage, wide) :- chord_stages(ChordType, ChordStages), rnext(UpperStage, ChordStages, LowerStage).
 chord_neighbours(UpperStage, ChordType, LowerStage, narrow) :- chord_stages(ChordType, ChordStages), rnext(LowerStage, ChordStages, UpperStage).
 
-% Гармонизация 4-х нот по одной известной ноте
+% Гармонизация 4-х ступеней по одной известной ступени
 % Stage1: int \in [1, 7] - верхняя нота (номер ступени)
 % ChordType: {ta, da, sa} - тип аккорда
 % Stage2: int \in [1, 7]
@@ -150,7 +150,10 @@ stages([note(_, N) | T], [N | TS]) :- stages(T, TS).
 % Каждый массив содержит 4 ноты, соответствующие 4-м голосам от
 % верхнего к нижнему.
 % Предикат проверяет, что не все голоса идут в одну сторону и не все одинаковы.
-not_all([X | T]) :- \+ maplist(==(X), T).
+%% not_all([X | T]) :- \+ maplist(==(X), T).
+%% not_all([X1, X2]) :- X1 #\= X2.
+not_all([X1, X2 | T]) :- X1 #\= X2.
+not_all([X, X | T]) :- not_all([X | T]).
 not_all_one([N1 | T1], [N2 | T2]) :- maplist(notes_cmp, [N1 | T1], [N2 | T2], Deltas),
                                      not_all(Deltas).
 
@@ -163,14 +166,36 @@ tne(sa, da).
 tne(ta, da).
 tne(ta, sa).
 
+% прямое перемещение в рамках одного аккорда.
+% Сохраняются тип аккорда, расположение и бас.
+one_chord(note(Octave1, Stage1), note(Octave2, Stage2), note(Octave3, Stage3), note(Octave4, Stage4), ChordType, ChordArrangement, note(Octave1N, Stage1N), note(Octave1N, Stage1N), note(Octave1N, Stage1N), note(Octave4, Stage4)) :-
+    harm1(Stage1, ChordType, Stage2, Stage3, Stage4, ChordArrangement),
+    nearest_down(note(Octave1, Stage1), note(Octave2, Stage2)),
+    nearest_down(note(Octave2, Stage2), note(Octave3, Stage3)),
+    nearest_down_bass(note(Octave3, Stage4), note(Octave4, Stage4)).
+    %% harm1(Stage1N, ChordType, Stage2N, Stage3N, Stage4, ChordArrangement),
+
 
 wnswitch([_], [_]).
 wnswitch([A, A | TS], [wide, narrow | WS]) :- wnswitch([A | TS], [narrow | WS]).
 wnswitch([A, A | TS], [narrow, wide | WS]) :- wnswitch([A | TS], [wide | WS]).
 wnswitch([_, B | TS], [W, W | WS]) :- wnswitch([B | TS], [W | WS]).
 
+wnswitch_n1([_], [_]).
+wnswitch_n1([_, N2 | T], [W, W | WS]) :- wnswitch_n1([N2 | T], [W | WS]).
+wnswitch_n1([N1, N2 | T], [narrow, wide | WS]) :- stage_less(N1, N2),
+                                                 wnswitch_n1([N2 | T], [wide | WS]).
+wnswitch_n1([N1, N2 | T], [wide, narrow | WS]) :- stage_less(N2, N1),
+                                                 wnswitch_n1([N2 | T], [narrow | WS]).
+
+
 same_length([], []).
 same_length([_|A], [_|B]) :- same_length(A,B).
+
+dirs([_], [_], [_], [_]).
+dirs([A1, A2 | AS], [B1, B2 | BS], [C1, C2 | CS], [D1, D2 | DS]) :-
+    not_all_one([A1, B1, C1, D1], [A2, B2, C2, D2]),
+    dirs([A2 | AS], [B2 | BS], [C2 | CS], [D2 | DS]).
 
 % Гармонизация списков нот в формате note(Октава, Ступень)
 harm(N1, TDS, N2, N3, N4, W) :-
@@ -187,10 +212,11 @@ harm(N1, TDS, N2, N3, N4, W) :-
    % без учета октавы
    harm_stages(NN1, TDS, NN2, NN3, NN4, W),
    wnswitch(TDS, W),
+   wnswitch_n1(N1, W),
    nearests_down(N1, N2),
    nearests_down(N2, N3),
    nearests_down_bass(N3, N4),
-   dirs(N2, N3, N4).
+   dirs(N1, N2, N3, N4).
 
 
 % чтение файла
