@@ -19,7 +19,12 @@ notes_cmp(X, Y, 0) :- stages_eq(X, Y).
 notes_cmp(X, Y, -1) :- stage_less(X, Y).
 notes_cmp(X, Y, 1) :- stage_less(Y, X).
 
-oct_up(note(Octave1, Stage), note(Octave2, Stage)) :- Octave2 #= Octave1 + 1.
+less_then_oct(note(Octave, Stage), note(Octave, Stage)).
+less_then_oct(note(Octave1, Stage1), note(Octave2, Stage2)) :- nearest_down(note(Octave1, Stage1), note(Octave2, Stage2)).
+less_then_oct(note(Octave1, Stage1), note(Octave2, Stage2)) :- nearest_down(note(Octave2, Stage2), note(Octave1, Stage1)).
+
+notes_less_oct_arr([_]).
+notes_less_oct_arr([N1, N2 | T]) :- less_then_oct(N1, N2), notes_less_oct_arr([N2 | T]).
 
 % по ноте и другой ноте, у которой не задана октава, подбирает октаву так, чтобы он была ближе всего
 % предполагается, что нота2 лежит ниже ноты1 в рамках одного аккорда
@@ -216,6 +221,7 @@ harm(N1, TDS, N2, N3, N4, W) :-
    nearests_down(N1, N2),
    nearests_down(N2, N3),
    nearests_down_bass(N3, N4),
+   notes_less_oct_arr(N4),
    dirs(N1, N2, N3, N4).
 
 
