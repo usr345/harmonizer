@@ -202,6 +202,24 @@ dirs([A1, A2 | AS], [B1, B2 | BS], [C1, C2 | CS], [D1, D2 | DS]) :-
     not_all_one([A1, B1, C1, D1], [A2, B2, C2, D2]),
     dirs([A2 | AS], [B2 | BS], [C2 | CS], [D2 | DS]).
 
+check_downbeat_step([_], [_], _).
+
+check_downbeat_step([ChordType1, ChordType2 | ChordTypes], [W1, W2 | Ws], MaxW) :-
+    tne(ChordType1, ChordType2), check_downbeat_step([ChordType2 | ChordTypes], [W2 | Ws], W2).
+
+check_downbeat_step([ChordType, ChordType | ChordTypes], [W1, W2 | Ws], MaxW) :-
+    W2 #< MaxW, check_downbeat_step([ChordType | ChordTypes], [W2 | Ws], MaxW).
+
+check_downbeat(X, [W | Ws]) :- check_downbeat_step(X, [W | Ws], W).
+
+check_measures([_], [_]).
+
+check_measures([ChordType1, ChordType2 | ChordTypes], [_, start | Ss]) :-
+    tne(ChordType1, ChordType2), check_measures([ChordType2 | ChordTypes], [start | Ss]).
+
+check_measures([_, X | ChordTypes], [_, non_start | Ss]) :-
+    check_measures([X | ChordTypes], [non_start | Ss]).
+
 % Гармонизация списков нот в формате note(Октава, Ступень)
 harm(N1, TDS, N2, N3, N4, W) :-
    same_length(N1, TDS),
