@@ -5,7 +5,7 @@
 stage_less(note(Octave1, _), note(Octave2, _)) :- Octave1 #< Octave2.
 stage_less(note(Octave, Stage1), note(Octave, Stage2)) :- Stage1 #< Stage2.
 
-stage_le(Stage1, Stage1).
+stage_le(note(Octave, Stage), note(Octave, Stage)).
 stage_le(Stage1, Stage2) :- stage_less(Stage1, Stage2).
 
 stages_eq(note(Octave, Stage), note(Octave, Stage)).
@@ -41,6 +41,23 @@ nearest_down_bass(note(Octave1, Stage1), note(Octave2, Stage2)) :-
 nearest_down_bass(note(Octave1, Stage1), note(Octave2_down, Stage2)) :-
     nearest_down(note(Octave1, Stage1), note(Octave2, Stage2)),
     Octave2_down #= Octave2 - 1.
+
+
+% Запрет на ложное перекрещивание голосов
+block_intersection_pair(N11, N12, N21, N22) :-
+    stage_le(N12, N21), stage_le(N22, N11).
+
+block_intersection(N11, N12, N13, N14, N21, N22, N23, N24) :-
+    block_intersection_pair(N11, N12, N21, N22),
+    block_intersection_pair(N12, N13, N22, N23),
+    block_intersection_pair(N13, N14, N23, N24).
+
+block_intersection_arr([_], [_], [_], [_]).
+block_intersection_arr([N11, N21 | N1s], [N12, N22 | N2s], [N13, N23 | N3s], [N14, N24 | N4s]) :-
+    block_intersection(N11, N12, N13, N14, N21, N22, N23, N24),
+    block_intersection_arr([N21 | N1s], [N22 | N2s], [N23 | N3s], [N24 | N4s]).
+
+%% block_intersection(note(5, 6), note(5, 1), note(4, 4), note(4, 4), note(5, 1), note(4, 3), note(4, 1)).
 
 stage_pitch(0, 0).
 stage_pitch(1, 2).
@@ -220,8 +237,10 @@ check_measures([ChordType1, ChordType2 | ChordTypes], [_, start | Ss]) :-
 check_measures([_, X | ChordTypes], [_, non_start | Ss]) :-
     check_measures([X | ChordTypes], [non_start | Ss]).
 
+%% bass_normal(X, Y, Y, Z) :- right(X, Y), .
+
 % Гармонизация списков нот в формате note(Октава, Ступень)
-harm(N1, TDS, N2, N3, N4, W) :-
+harm(N1, TDS, N2, N3, N4, W, Strength, Measures) :-
    same_length(N1, TDS),
    same_length(N1, N2),
    same_length(N1, N3),
@@ -240,8 +259,13 @@ harm(N1, TDS, N2, N3, N4, W) :-
    nearests_down(N2, N3),
    nearests_down_bass(N3, N4),
    notes_less_oct_arr(N4),
+   block_intersection_arr(N1, N2, N3, N4),
    dirs(N1, N2, N3, N4).
+   %% check_downbeat(TDS, Strength).
+   %% check_measures(TDS, Measures).
 
+%% music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [1, 0, 1, 0, 1, 0, 1]).
+music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [1, 0, 1, 0, 1, 0, 1]).
 
 % чтение файла
 
@@ -561,4 +585,4 @@ readNotes(File, Shift, Scale, Notes) :-
 
 harmFile(File, S, T, N1, N2, N3, N4, C, W) :-
      readNotes(File, S, T, N1),
-     harm(N1, C, N2, N3, N4, W).
+     harm(N1, C, N2, N3, N4, W, _, _).
