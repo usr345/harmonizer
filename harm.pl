@@ -260,9 +260,9 @@ harm(N1, TDS, N2, N3, N4, W, Strength, Measures) :-
    nearests_down_bass(N3, N4),
    notes_less_oct_arr(N4),
    block_intersection_arr(N1, N2, N3, N4),
-   dirs(N1, N2, N3, N4).
+   dirs(N1, N2, N3, N4),
    %% check_downbeat(TDS, Strength).
-   %% check_measures(TDS, Measures).
+   check_measures(TDS, Measures).
 
 %% music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [1, 0, 1, 0, 1, 0, 1]).
 music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [1, 0, 1, 0, 1, 0, 1]).
@@ -548,6 +548,10 @@ getElements(_, [], []).
 getElements(E, [element(E, _, M) | T], MO) :- getElements(E, T, MT), append(M, MT, MO), !.
 getElements(E, [_|T], MO) :- getElements(E, T, MO).
 
+filterElements(_, [], []).
+filterElements(E, [element(E, _, M) | T], [M | MT]) :- filterElements(E, T, MT), !.
+filterElements(E, [_|T], MO) :- filterElements(E, T, MO).
+
 shift('C', 0).
 shift('D', 2).
 shift('E', 4).
@@ -570,19 +574,32 @@ altitudes2notes(S, T, [A|AS], [N|NS]) :- altitude2note(S, T, A, N), altitudes2no
 % соответствие между номером мажорной ступени в хроматической гамме
 % и номером ступени в мажорной тональности
 tons(maj, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)]).
+tons(min, [stage(0,1), stage(2,2), stage(3, 3), stage(5, 4), stage(7, 5), stage(8, 6), stage(11, 7)]).
 
-readMXML(File, XNotes, Alts) :-
+markMeasure(_, [], []).
+markMeasure(V, [_|M], [V|R]) :- markMeasure(non_start, M, R).
+markMeasure(M, R) :- markMeasure(start, M, R).
+
+getNotesFromParts(P, XNotes, Measures) :-
+       filterElements(measure, P, M),
+       maplist(getNotes, M, XNotesLists),
+       append(XNotesLists, XNotes),
+       maplist(markMeasure, XNotesLists, Marks),
+       append(Marks, Measures).
+
+readMXML(File, XNotes, Alts, Marks) :-
        musicxml_score(File, element(_, _, S)),
        getElements(part, S, P),
-       getElements(measure, P, M),
-       getNotes(M, XNotes),
+%       getElements(measure, P, M),
+%       getNotes(M, XNotes),
+       getNotesFromParts(P, XNotes, Marks),
        altitudes(XNotes, Alts).
 
-readNotes(File, Shift, Scale, Notes) :-
-       readMXML(File, _, Alts),
+readNotes(File, Shift, Scale, Notes, Marks) :-
+       readMXML(File, _, Alts, Marks),
        tons(Scale, List),
        altitudes2notes(Shift, List, Alts, Notes).
 
 harmFile(File, S, T, N1, N2, N3, N4, C, W) :-
-     readNotes(File, S, T, N1),
-     harm(N1, C, N2, N3, N4, W, _, _).
+     readNotes(File, S, T, N1, Marks),
+     harm(N1, C, N2, N3, N4, W, _, Marks).
