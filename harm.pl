@@ -564,6 +564,13 @@ altitude(xnote(O, N, A), H) :- shift(N, D), H #= (O * 12) + D + A.
 altitudes([], []).
 altitudes([A|AS], [O|OS]) :- altitude(A, O), altitudes(AS, OS).
 
+/*
+Конвертация абсолютной величины в ноту
+- S - абсолютная величина тоники - от 0 до 11
+- T - описание тональности: ступень, абсолютный номер ноты [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)]
+- A - абсолютное значение ноты с учетом октавы
+- note(O, N) - октава, ступень лада
+*/
 altitude2note(S, T, A, note(O, N)) :-
 	X #= mod(A - S, 12),
 	member(stage(X, N), T),
@@ -587,14 +594,30 @@ getNotesFromParts(P, XNotes, Measures) :-
        maplist(markMeasure, XNotesLists, Marks),
        append(Marks, Measures).
 
-readMXML(File, XNotes, Alts, Marks) :-
+/*
+Фунция считывает массив нот из файла
+- File - имя файла с расширением xml или mxml
+- XNotes - массив нот в представлении xnote(4, 'C', 0) - xnote(октава, нота в виде атома, альтерация: -1, 0, 1)
+- Alts - абсолютная величина нот
+- Marks - массив маркеров начала тактов [start, non_start, non_start, start, non_start, non_start]
+*/
+readMXML(File, XNotes, Alts, Marks, Key) :-
        musicxml_score(File, element(_, _, S)),
        getElements(part, S, P),
-%       getElements(measure, P, M),
+       getElements(measure, P, M),
+       getElements(attributes, M, A),
+       getElements(key, A, Key),
 %       getNotes(M, XNotes),
        getNotesFromParts(P, XNotes, Marks),
        altitudes(XNotes, Alts).
 
+/*
+- File (вх) - имя файла
+- Shift (вх) - абсолютная величина тоники - от 0 до 11
+- Scale (вх) - maj, min
+- Notes (исх) -
+- Marks (исх) -
+*/
 readNotes(File, Shift, Scale, Notes, Marks) :-
        readMXML(File, _, Alts, Marks),
        tons(Scale, List),
