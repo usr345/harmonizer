@@ -275,10 +275,11 @@ harm(N1, TDS, N2, N3, N4, W, Strength, Measures) :-
    block_intersection_arr(N1, N2, N3, N4),
    dirs(N1, N2, N3, N4),
    %% check_downbeat(TDS, Strength).
-   check_measures(TDS, Measures).
+   check_measures(TDS, Measures),
+   \+ parocts([N1, N2, N3, N4]).
 
 %% music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [1, 0, 1, 0, 1, 0, 1]).
-music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [1, 0, 1, 0, 1, 0, 1]).
+music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [start, non_start, start, non_start, start, non_start, start]).
 
 % чтение файла
 
