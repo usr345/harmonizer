@@ -124,6 +124,19 @@ chord_primo(X, Chord) :- chord_stages(Chord, [X | _]).
 chord_neighbours(UpperStage, ChordType, LowerStage, wide) :- chord_stages(ChordType, ChordStages), rnext(UpperStage, ChordStages, LowerStage).
 chord_neighbours(UpperStage, ChordType, LowerStage, narrow) :- chord_stages(ChordType, ChordStages), rnext(LowerStage, ChordStages, UpperStage).
 
+test1([note(1, 1), note(1, 2)], [note(3, 1), note(3,2)], [note(3, 4), note(3,6)], [note(3, 7), note(3,1)]).
+both_eq(X, X, Y, Y).
+paroct([_], [_]).
+paroct([note(_, S1), N1 | T1], [note(_, S2), N2 | T2]) :-
+   note(_, X1) = N1,
+   note(_, X2) = N2,
+   both_eq(S1, S2, X1, X2),
+   paroct([N1 | T1], [N2 | T2]).
+
+parocts(A) :-
+   append([_, [X], _, [Y], _], A),
+   not paroct(X, Y).
+
 % Гармонизация 4-х ступеней по одной известной ступени
 % Stage1: int \in [1, 7] - верхняя нота (номер ступени)
 % ChordType: {ta, da, sa} - тип аккорда
@@ -587,10 +600,24 @@ markMeasure(_, [], []).
 markMeasure(V, [_|M], [V|R]) :- markMeasure(non_start, M, R).
 markMeasure(M, R) :- markMeasure(start, M, R).
 
+force([_,_], [2, 1]).
+force([_,_,_], [3, 2, 1]).
+force([_,_,_,_], [4, 2, 3, 1]).
+force([_,_,_,_,_,_], [5, 4, 3, 2, 1]).
+force([_,_,_,_,_,_,_], [6, 5, 4, 3, 2, 1]).
+force([_,_,_,_,_,_,_,_], [7, 6, 5, 4, 3, 2, 1]).
+force([_,_,_,_,_,_,_,_,_], [8, 7, 6, 5, 4, 3, 2, 1]).
+force([_,_,_,_,_,_,_,_,_,_], [9, 8, 7, 6, 5, 4, 3, 2, 1]).
+
 getNotesFromParts(P, XNotes, Measures) :-
        filterElements(measure, P, M),
        maplist(getNotes, M, XNotesLists),
        append(XNotesLists, XNotes),
+
+       %write(XNotesLists),
+       %maplist(force, XNotesLists, ForcesLists),
+       %append(ForcesLists, Forces),
+
        maplist(markMeasure, XNotesLists, Marks),
        append(Marks, Measures).
 
