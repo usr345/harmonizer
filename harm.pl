@@ -124,8 +124,10 @@ chord_primo(X, Chord) :- chord_stages(Chord, [X | _]).
 chord_neighbours(UpperStage, ChordType, LowerStage, wide) :- chord_stages(ChordType, ChordStages), rnext(UpperStage, ChordStages, LowerStage).
 chord_neighbours(UpperStage, ChordType, LowerStage, narrow) :- chord_stages(ChordType, ChordStages), rnext(LowerStage, ChordStages, UpperStage).
 
-test1([note(1, 1), note(1, 2)], [note(3, 1), note(3,2)], [note(3, 4), note(3,6)], [note(3, 7), note(3,1)]).
+test1([note(1, 1), note(1, 2)], [note(3, 5), note(3, 6)], [note(3, 4), note(3,6)], [note(3, 7), note(3,1)]).
+
 both_eq(X, X, Y, Y).
+
 paroct([_], [_]).
 paroct([note(_, S1), N1 | T1], [note(_, S2), N2 | T2]) :-
    note(_, X1) = N1,
@@ -136,6 +138,20 @@ paroct([note(_, S1), N1 | T1], [note(_, S2), N2 | T2]) :-
 parocts(A) :-
    append([_, [X], _, [Y], _], A),
    paroct(X, Y).
+
+both_q(X1, X2, Y1, Y2) :- mod(X1 - X2, 7) #= 4, mod(Y1 - Y2, 7) #= 4.
+
+parq([_], [_]).
+parq([note(_, S1), N1 | T1], [note(_, S2), N2 | T2]) :-
+   note(_, X1) = N1,
+   note(_, X2) = N2,
+   both_q(S1, S2, X1, X2),
+   paroct([N1 | T1], [N2 | T2]).
+
+parq(A) :-
+   append([_, [X], _, [Y], _], A),
+   parq(X, Y).
+
 
 % Гармонизация 4-х ступеней по одной известной ступени
 % Stage1: int \in [1, 7] - верхняя нота (номер ступени)
@@ -276,7 +292,8 @@ harm(N1, TDS, N2, N3, N4, W, Strength, Measures) :-
    dirs(N1, N2, N3, N4),
    %% check_downbeat(TDS, Strength).
    check_measures(TDS, Measures),
-   \+ parocts([N1, N2, N3, N4]).
+   \+ parocts([N1, N2, N3, N4]),
+   \+ paroq([N1, N2, N3, N4]).
 
 %% music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [1, 0, 1, 0, 1, 0, 1]).
 music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [start, non_start, start, non_start, start, non_start, start]).
