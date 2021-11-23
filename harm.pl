@@ -123,7 +123,7 @@ stages([note(_, N) | T], [N | TS]) :- stages(T, TS).
 % Предикат проверяет, что не все голоса идут в одну сторону и не все одинаковы.
 %% not_all([X | T]) :- \+ maplist(==(X), T).
 %% not_all([X1, X2]) :- X1 #\= X2.
-not_all([X1, X2 | T]) :- X1 #\= X2.
+not_all([X1, X2 | _]) :- X1 #\= X2.
 not_all([X, X | T]) :- not_all([X | T]).
 not_all_one([N1 | T1], [N2 | T2]) :- maplist(notes_cmp, [N1 | T1], [N2 | T2], Deltas),
                                      not_all(Deltas).
@@ -170,14 +170,14 @@ dirs([A1, A2 | AS], [B1, B2 | BS], [C1, C2 | CS], [D1, D2 | DS]) :-
 
 check_downbeat_step([_], [_], _).
 
-check_downbeat_step([ChordType1, ChordType2 | ChordTypes], [W1, W2 | Ws], MaxW) :-
-    tne(ChordType1, ChordType2), check_downbeat_step([ChordType2 | ChordTypes], [W2 | Ws], W2).
+check_downbeat_step([ChordType1, ChordType2 | ChordTypes], [W2 | Ws], _) :-
+    tne(ChordType1, ChordType2), check_downbeat_step([ChordType2 | ChordTypes], Ws, W2).
 
-check_downbeat_step([ChordType, ChordType | ChordTypes], [W1, W2 | Ws], MaxW) :-
-    W2 #< MaxW, check_downbeat_step([ChordType | ChordTypes], [W2 | Ws], MaxW).
+check_downbeat_step([ChordType, ChordType | ChordTypes], [W2 | Ws], MaxW) :-
+    W2 #< MaxW, check_downbeat_step([ChordType | ChordTypes], Ws, MaxW).
 
 % unused
-check_downbeat(X, [W | Ws]) :- check_downbeat_step(X, [W | Ws], W).
+check_downbeat(X, [W | Ws]) :- check_downbeat_step(X, Ws, W).
 
 check_measures([_], [_]).
 
@@ -214,7 +214,7 @@ harm(N1, TDS, N2, N3, N4, W, Strength, Measures) :-
    %% check_downbeat(TDS, Strength).
    check_measures(TDS, Measures),
    \+ parocts([N1, N2, N3, N4]),
-   \+ paroq([N1, N2, N3, N4]).
+   \+ parq([N1, N2, N3, N4]).
 
 %% music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [1, 0, 1, 0, 1, 0, 1]).
 music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [start, non_start, start, non_start, start, non_start, start]).

@@ -61,6 +61,6 @@ readMXML(File, XNotes, Alts, Marks, Key) :-
 - Marks (исх) -
 */
 readNotes(File, Shift, Scale, Notes, Marks) :-
-       readMXML(File, _, Alts, Marks),
+       readMXML(File, _, Alts, Marks, _),
        tons(Scale, List),
        altitudes2notes(Shift, List, Alts, Notes).
