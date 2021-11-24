@@ -35,11 +35,13 @@ less_then_oct(note(Octave1, Stage1), note(Octave2, Stage2)) :- nearest_down(note
 notes_less_oct_arr([_]).
 notes_less_oct_arr([N1, N2 | T]) :- less_then_oct(N1, N2), notes_less_oct_arr([N2 | T]).
 
-% по ноте и другой ноте, у которой не задана октава, подбирает октаву так, чтобы он была ближе всего
-% предполагается, что нота2 лежит ниже ноты1 в рамках одного аккорда
-nearest_down(note(Octave1, Stage1), note(Octave2, Stage2)) :-  Octave2 #= Octave1 - 1, Stage1 #< Stage2.
-nearest_down(note(Octave1, Stage), note(Octave2, Stage)) :-  Octave2 #= Octave1 - 1.
-nearest_down(note(Octave, Stage1), note(Octave, Stage2)) :-  Stage1 #> Stage2.
+% по ноте note(Octave1, Stage1) и по второй ноте note(Octave2, Stage2),
+% у которой задана Stage2, но не задана Octave2, подбирает Octave2 так, чтобы он была ближе всего
+% к ноте (Octave1, Stage1).
+% Предполагается, что нота2 лежит ниже ноты1 в рамках одного аккорда
+nearest_down(note(Octave1, Stage1), note(Octave2, Stage2)) :- Octave2 #= Octave1 - 1, Stage1 #< Stage2.
+nearest_down(note(Octave1, Stage), note(Octave2, Stage)) :- Octave2 #= Octave1 - 1.
+nearest_down(note(Octave, Stage1), note(Octave, Stage2)) :- Stage1 #> Stage2.
 
 nearests_down([], []).
 nearests_down([NoteA|ATail], [NoteB|BTail]) :- nearest_down(NoteA, NoteB), nearests_down(ATail, BTail).

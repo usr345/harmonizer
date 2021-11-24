@@ -1,5 +1,6 @@
 ﻿%-*- mode: prolog-*-
 
+:- module(harm, [block_intersection_pair/4, block_intersection/8, block_intersection_arr/4, harm1/6, harm/8]).
 :- use_module(pitch_arithm).
 :- use_module(utility).
 :- use_module(read).
