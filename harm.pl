@@ -1,6 +1,6 @@
 ﻿%-*- mode: prolog-*-
 
-:- module(harm, [block_intersection_pair/4, block_intersection/8, block_intersection_arr/4, harm1/6, harm/8]).
+:- module(harm, [block_intersection_pair/4, block_intersection/8, block_intersection_arr/4, harm1/6, harm/8, parq/1]).
 :- use_module(pitch_arithm).
 :- use_module(utility).
 :- use_module(read).
@@ -49,7 +49,6 @@ test1([note(1, 1), note(1, 2)], [note(3, 5), note(3, 6)], [note(3, 4), note(3,6)
 
 both_eq(X, X, Y, Y).
 
-paroct([_], [_]).
 paroct([note(_, S1), N1 | T1], [note(_, S2), N2 | T2]) :-
    note(_, X1) = N1,
    note(_, X2) = N2,
@@ -62,7 +61,6 @@ parocts(A) :-
 
 both_q(X1, X2, Y1, Y2) :- mod(X1 - X2, 7) #= 4, mod(Y1 - Y2, 7) #= 4.
 
-parq([_], [_]).
 parq([note(_, S1), N1 | T1], [note(_, S2), N2 | T2]) :-
    note(_, X1) = N1,
    note(_, X2) = N2,
