@@ -3,6 +3,7 @@
 	stage_le/2, stage_less/2,
 	nearest_down/2, nearest_down_bass/2,
 	nearests_down/2, nearests_down_bass/2,
+    less_then_oct/2,
 	altitudes/2,
 	notes_cmp/3,
 	notes_less_oct_arr/1,

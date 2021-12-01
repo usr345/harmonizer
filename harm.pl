@@ -1,6 +1,6 @@
 ﻿%-*- mode: prolog-*-
 
-:- module(harm, [block_intersection_pair/4, block_intersection/8, block_intersection_arr/4, harm1/6, harm/8, parq/1]).
+:- module(harm, [block_intersection_pair/4, block_intersection/8, block_intersection_arr/4, harm1/6, harm/8, parq/1, paroct/2, parocts/1]).
 :- use_module(pitch_arithm).
 :- use_module(utility).
 :- use_module(read).
@@ -56,6 +56,7 @@ paroct([note(_, S1), N1 | T1], [note(_, S2), N2 | T2]) :-
    paroct([N1 | T1], [N2 | T2]).
 
 parocts(A) :-
+   % Перебирает все возможные пары голосов
    append([_, [X], _, [Y], _], A),
    paroct(X, Y).
 
