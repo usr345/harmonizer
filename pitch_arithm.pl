@@ -7,7 +7,7 @@
 	altitudes/2,
 	notes_cmp/3,
 	notes_less_oct_arr/1,
-	tons/2, altitudes2notes/4]).
+	tons/2, altitude2note/4, altitudes2notes/4]).
 :- use_module(library(clpfd)).
 
 stage_less(note(Octave1, _), note(Octave2, _)) :- Octave1 #< Octave2.
@@ -75,14 +75,14 @@ altitudes([A|AS], [O|OS]) :- altitude(A, O), altitudes(AS, OS).
 /*
 Конвертация абсолютной величины в ноту
 - S - абсолютная величина тоники - от 0 до 11
-- T - описание тональности: ступень, абсолютный номер ноты [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)]
+- T: список - описание тональности: ступень, абсолютный номер ноты [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)]. Этих таблиц 2: для мажора и для минора, они не меняются.
 - A - абсолютное значение ноты с учетом октавы
-- note(O, N) - октава, ступень лада
+- note(O, N) - октава, ступень лада. Относительная октава (относительно тоники) учитывается.
 */
 altitude2note(S, T, A, note(O, N)) :-
-	X #= mod(A - S, 12),
+	X #= mod(A-S, 12),
 	member(stage(X, N), T),
-	O #= div(A - S, 12).
+	O #= div(A-S, 12).
 altitudes2notes(_, _, [], []).
 altitudes2notes(S, T, [A|AS], [N|NS]) :- altitude2note(S, T, A, N), altitudes2notes(S, T, AS, NS).
 
