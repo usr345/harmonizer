@@ -3,6 +3,7 @@
 :- use_module(harm).
 :- discontiguous(run_test/1).
 :- discontiguous(test/4).
+:- discontiguous(test_harm/1).
 
 test(test1, [note(1, 5), note(3, 5)], stage_less/2, positive).
 test(test2, [note(1, 5), note(1, 6)], stage_less/2, positive).
@@ -95,6 +96,25 @@ predicates_tested(Module, Set) :- findall(P, (module_property(Module, exports(X)
 
 predicates_not_tested(Module, Set) :- findall(P, (module_property(Module, exports(X)), member(P, X), \+ test(_, _, P, _)), List),
                                   list_to_set(List, Set).
+
+test(test27, [[ta, sa, da, da, ta, da, ta, ta], [4, 2, 3, 1, 4, 2, 3, 1]], check_downbeat/2, positive).
+test(test28, [[ta, ta, ta, ta, ta, ta, ta, ta], [4, 2, 3, 1, 4, 2, 3, 1]], check_downbeat/2, positive).
+
+run_test(Test) :- test(Test, [T, Strengths], check_downbeat/2, positive),
+                  check_downbeat(T, Strengths).
+
+test(test27, [[ta, sa, da, da, ta, da, ta, ta], [4, 2, 3, 1, 4, 2, 3, 1]], check_downbeat/2, positive).
+test(test28, [[ta, ta, ta, ta, ta, ta, ta, ta], [4, 2, 3, 1, 4, 2, 3, 1]], check_downbeat/2, positive).
+
+run_test(Test) :- test(Test, [T, Strengths], check_downbeat/2, positive),
+                  check_downbeat(T, Strengths).
+
+test(test29, [[ta, sa, sa, da, ta, da, ta, ta], [4, 2, 3, 1, 4, 2, 3, 1]], check_downbeat/2, negative).
+test(test30, [[ta, sa, da, da, da, ta, ta, ta], [4, 2, 3, 1, 4, 2, 3, 1]], check_downbeat/2, negative).
+
+run_test(Test) :- test(Test, [T, Strengths], check_downbeat/2, negative),
+                  \+ check_downbeat(T, Strengths).
+
 %% nearest_down_bass
 
 %% test_harm_example(melody1, [[note(5, 3), note(5, 1)], [note(4, 5), note(4, 3)], [note(4, 1), note(3, 5)], [note(3, 1), note(3, 1)], [ta, ta], [wide, wide], [start, non_start], [2, 1]]).
@@ -103,6 +123,24 @@ predicates_not_tested(Module, Set) :- findall(P, (module_property(Module, export
 test_harm_example(melody2, [[note(5, 3), note(5, 1)], [note(4, 5), note(4, 5)], [note(4, 1), note(4, 3)], [note(3, 1), note(3, 1)], [ta, ta], [wide, narrow], [start, non_start], [2, 1]]).
 
 %% test_harm_neg_example(melody3, [[note(5, 3), note(5, 1)], [note(4, 5), note(4, 3)], [note(4, 1), note(3, 5)], [note(3, 1), note(3, 1)], [ta, ta], [wide, narrow], [start, non_start], [2, 1]]).
+
+test_harm(Test) :- test_harm_example(Test, [N1, N2, N3, N4, Types, Widths, Measures, Strengths]),
+                   %% parq([N1, N2, N3, N4]).
+                   harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures).
+
+test_harm_example(melody3, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [start, non_start, start, non_start, start, non_start, start]).
+
+test_harm_example(melody4,
+                  [
+                  [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)],
+                  [note(5, 3), note(5, 4), note(5, 2), note(5, 1), note(5, 1), note(4, 7), note(4, 5)],
+                  [note(5, 1), note(5, 1), note(4, 7), note(4, 5), note(4, 6), note(4, 5), note(4, 3)],
+                  [note(4, 1), note(3, 4), note(3, 5), note(4, 1), note(3, 4), note(3, 5), note(4, 1)],
+                  [ta, sa, da, ta, sa, da, ta],
+                  [narrow, narrow, narrow, narrow, narrow, narrow, narrow],
+                  [start, non_start, start, non_start, start, non_start, start],
+                  [2, 1, 2, 1, 2, 1, 2]
+                  ]).
 
 test_harm(Test) :- test_harm_example(Test, [N1, N2, N3, N4, Types, Widths, Measures, Strengths]),
                    %% parq([N1, N2, N3, N4]).

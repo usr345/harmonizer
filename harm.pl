@@ -1,6 +1,6 @@
 ﻿%-*- mode: prolog-*-
 
-:- module(harm, [block_intersection_pair/4, block_intersection/8, block_intersection_arr/4, harm1/6, harm/8, parq/1, paroct/2, parocts/1]).
+:- module(harm, [block_intersection_pair/4, block_intersection/8, block_intersection_arr/4, harm1/6, harm/8, parq/1, paroct/2, parocts/1, check_downbeat/2]).
 :- use_module(pitch_arithm).
 :- use_module(utility).
 :- use_module(read).
@@ -168,17 +168,23 @@ dirs([A1, A2 | AS], [B1, B2 | BS], [C1, C2 | CS], [D1, D2 | DS]) :-
     not_all_one([A1, B1, C1, D1], [A2, B2, C2, D2]),
     dirs([A2 | AS], [B2 | BS], [C2 | CS], [D2 | DS]).
 
+% Запрет на перенос одного типа аккорда со слабой доли на сильную
 check_downbeat_step([_], [_], _).
 
-check_downbeat_step([ChordType1, ChordType2 | ChordTypes], [W2 | Ws], _) :-
-    tne(ChordType1, ChordType2), check_downbeat_step([ChordType2 | ChordTypes], Ws, W2).
+% Если 2 аккорда не равны, силы не проверяем
+check_downbeat_step([ChordType1, ChordType2 | ChordTypes], [_, W2 | Ws], _) :-
+    tne(ChordType1, ChordType2), check_downbeat_step([ChordType2 | ChordTypes], [W2 | Ws], W2).
 
-check_downbeat_step([ChordType, ChordType | ChordTypes], [W2 | Ws], MaxW) :-
-    W2 #< MaxW, check_downbeat_step([ChordType | ChordTypes], Ws, MaxW).
+% Если равны, MaxW - максимальная сила, на который пришелся данный аккорд
+check_downbeat_step([ChordType, ChordType | ChordTypes], [_, W2 | Ws], MaxW) :-
+    W2 #< MaxW, check_downbeat_step([ChordType | ChordTypes], [W2 | Ws], MaxW).
 
-% unused
-check_downbeat(X, [W | Ws]) :- check_downbeat_step(X, Ws, W).
+check_downbeat_step([ChordType, ChordType | ChordTypes], [_, MaxW | Ws], MaxW) :-
+    check_downbeat_step([ChordType | ChordTypes], [MaxW | Ws], MaxW).
 
+check_downbeat(X, [W | Ws]) :- check_downbeat_step(X, [W | Ws], W).
+
+%
 check_measures([_], [_]).
 
 check_measures([ChordType1, ChordType2 | ChordTypes], [_, start | Ss]) :-
@@ -211,13 +217,12 @@ harm(N1, TDS, N2, N3, N4, W, Strength, Measures) :-
    notes_less_oct_arr(N4),
    block_intersection_arr(N1, N2, N3, N4),
    dirs(N1, N2, N3, N4),
-   %% check_downbeat(TDS, Strength).
+   check_downbeat(TDS, Strength),
    check_measures(TDS, Measures),
    \+ parocts([N1, N2, N3, N4]),
    \+ parq([N1, N2, N3, N4]).
 
 %% music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [1, 0, 1, 0, 1, 0, 1]).
-music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [start, non_start, start, non_start, start, non_start, start]).
 
 force([_,_], [2, 1]).
 force([_,_,_], [3, 2, 1]).
