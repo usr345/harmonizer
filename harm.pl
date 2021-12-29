@@ -1,6 +1,6 @@
 ﻿%-*- mode: prolog-*-
 
-:- module(harm, [block_intersection_pair/4, block_intersection/8, block_intersection_arr/4, harm1/6, harm/8, parq/1, paroct/2, parocts/1, check_downbeat/2]).
+:- module(harm, [block_intersection_pair/4, block_intersection/8, block_intersection_arr/4, harm1/6, harm/8, parq/1, paroct/2, parocts/1, check_downbeat/2, group1/5, groupHarms/2]).
 :- use_module(pitch_arithm).
 :- use_module(utility).
 :- use_module(read).
@@ -236,3 +236,22 @@ force([_,_,_,_,_,_,_,_,_,_], [9, 8, 7, 6, 5, 4, 3, 2, 1]).
 harmFile(File, S, T, N1, N2, N3, N4, C, W) :-
      readNotes(File, S, T, N1, Marks),
      harm(N1, C, N2, N3, N4, W, _, Marks).
+
+group1(Top, Bass, [], [Bass], []).
+% R - всё, что мы не смогли обработать
+group1(Top, Bass, [p(Top, Bass1) | TS], [Bass1 | BS], R) :-
+    group1(Top, Bass, TS, BS, R).
+
+group1(Top, Bass, [p(Top1, Bass1) | TS], BS, [p(Top1, Bass1) | R]) :-
+    \+ Top = Top1,
+    group1(Top, Bass, TS, BS, R).
+
+
+% N1, N2, N3, N4, W, T
+groupHarms([], []).
+% M - выход, который содержит список пар, всё кроме баса, как ключ, и список всех басов,
+% которые к нему подходят.
+% [N1 | N1S], [N2 | N2S], [N3 | N3S], [N4 | N4S], [W | WS], [T | TS], [M | MS]
+groupHarms([p(Top, Bass) | Pairs], [g(Top, M) | MS]) :-
+    group1(Top, Bass, Pairs, M, R),
+    groupHarms(R, MS).

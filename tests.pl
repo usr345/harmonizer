@@ -66,7 +66,8 @@ test(test20, [note(5, 3), [5, 4], 1], nearest_down_bass/2, positive).
 test(test21, [note(5, 3), [5, 4, 3], 3], nearest_down_bass/2, positive).
 
 same_elements([], []).
-same_elements([X | XS], Y) :- append([A, [X], B], Y), append(A, B, Z),
+same_elements([X | XS], Y) :- append([A, [X], B], Y),
+                              append(A, B, Z),
                               same_elements(XS, Z), !.
 
 %% same_elements([a, b, c, a], [c, a, b, a]).
@@ -130,6 +131,7 @@ test_harm(Test) :- test_harm_example(Test, [N1, N2, N3, N4, Types, Widths, Measu
 
 test_harm_example(melody3, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [start, non_start, start, non_start, start, non_start, start]).
 
+% A-min
 test_harm_example(melody4,
                   [
                   [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)],
@@ -146,8 +148,58 @@ test_harm(Test) :- test_harm_example(Test, [N1, N2, N3, N4, Types, Widths, Measu
                    %% parq([N1, N2, N3, N4]).
                    harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures).
 
+run_test(Test) :- test(Test, [S, T, A, Val], altitude2note/4, positive),
+                  findall(X, altitude2note(S, T, A, X), [Val]).
+
+test(test31, [a, c, [p(a,d), p(b,e), p(b,f)], [c, d], [p(b,e), p(b,f)]], group1/5, positive).
+
+run_test(T) :-
+    test(T, [Top, Bass, Rest, B1, R1], group1/5, _),
+    findall(x(A1, A2), group1(Top, Bass, Rest, A1, A2), [x(X, Y)]),
+    same_elements(X, B1),
+    same_elements(Y, R1).
+
+matched_elements(_, [], []).
+matched_elements(Pred, [X | XS], Y) :- append([A, [X1], B], Y),
+                                       call(Pred, X, X1),
+                                       append(A, B, Z),
+                                       matched_elements(Pred, XS, Z), !.
+
+% p - это пара. Сначала идут возможные гармонизации: p(a, c): a - 3 верхних
+% голоса, c - бас.
+% g - это группа. Потом тройки верхних голосов группируются, и к ним добавляются всевозможные басы.
+test(test32, [p(a, c), p(a,d), p(b,e), p(b,f)], [g(a, [c, d]), g(b, [e, f])], groupHarms/2, positive).
+
+matchg(g(X, A), g(X, B)) :- same_elements(A, B).
+% Сначала берём из теста список пар (верхние голоса, бас) и идеальную группировку в B
+%
+runT(T) :- test(T, X, Ideal, groupHarms/2, positive),
+           findall(G, groupHarms(X, G), [G]),
+           matched_elements(matchg, G, Ideal).
+
+runTestGroupHarm(T) :-
+    test(T, [Top, Bass, Rest, B1, R1], group1/5, _),
+    findall(x(A1, A2), group1(Top, Bass, Rest, A1, A2), [x(X, Y)]),
+    same_elements(X, B1),
+    same_elements(Y, R1).
+
+
+
 %% test_harm(Test) :- test_harm_neg_example(Test, [N1, N2, N3, N4, Types, Widths, Measures, Strengths]),
 %%                    \+ harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures).
+%% test2(G), length(G, L), member(g(_, F), G), length(F, FL).
+test2(Groups) :- test_harm_example(
+                     melody4, [N1, _, _, _, _, _, Measures, Strengths]),
+                 findall(p([N1, N2, N3, Types, Widths], N4),
+                         harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures),
+                         Harms),
+                 groupHarms(Harms, Groups).
 
-%% test_nearest_down_bass
-%% stages_eq
+isBetter([T | TS], [B1 | BS1], [_ | BS2]) :- nearest_down(T, B1), isBetter(TS, BS1, BS2), !.
+isBetter([T | TS], [B1 | BS1], [B2 | BS2]) :- \+ nearest_down(T, B2), isBetter(TS, BS1, BS2).
+
+are_identical(X, Y) :-
+    X == Y.
+
+filterList(A, In, Out) :-
+    exclude(are_identical(A), In, Out).
