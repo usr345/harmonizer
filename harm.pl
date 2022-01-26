@@ -1,6 +1,6 @@
 ﻿%-*- mode: prolog-*-
 
-:- module(harm, [block_intersection_pair/4, block_intersection/8, block_intersection_arr/4, harm1/6, harm/8, parq/1, paroct/2, parocts/1, check_downbeat/2, group1/5, groupHarms/2]).
+:- module(harm, [block_intersection_pair/4, block_intersection/8, block_intersection_arr/4, harm1/6, harm/8, parq/1, paroct/2, parocts/1, check_downbeat/2, group1/5, groupHarms/2, group_harm/9, isBetter/3]).
 :- use_module(pitch_arithm).
 :- use_module(utility).
 :- use_module(read).
@@ -193,6 +193,15 @@ check_measures([ChordType1, ChordType2 | ChordTypes], [_, start | Ss]) :-
 check_measures([_, X | ChordTypes], [_, non_start | Ss]) :-
     check_measures([X | ChordTypes], [non_start | Ss]).
 
+% выбирает список базов [B1 | B1S], которые не хуже при гармонизации, чем [B2 | B2S]
+% [T | TS] - список теноров
+% [B1 | B1S] - первый список басов, который isBetter
+% [B2 | B2S] - второй список басов, который не isBetter
+% Если первый nearest_down, то второй нам не важен
+isBetter([T | TS], [_ | B2S], [B1 | B1S]) :- nearest_down(T, B1), isBetter(TS, B1S, B2S), !.
+% Если второй не nearest_down, то первый нам не важен
+isBetter([T | TS], [B2 | B2S], [_ | B1S]) :- \+ nearest_down(T, B2), isBetter(TS, B1S, B2S).
+
 %% bass_normal(X, Y, Y, Z) :- right(X, Y), .
 
 % Гармонизация списков нот в формате note(Октава, Ступень)
@@ -221,6 +230,15 @@ harm(N1, TDS, N2, N3, N4, W, Strength, Measures) :-
    check_measures(TDS, Measures),
    \+ parocts([N1, N2, N3, N4]),
    \+ parq([N1, N2, N3, N4]).
+
+% Получает на вход то же, что и harm
+% после чего одинаковые гармонизации с разными басами помещает в
+% переменную Groups
+group_harm(N1, N2, N3, N4, Types, W, Strength, Measures, Groups) :-
+    findall(p([N1, N2, N3, Types, Widths], N4),
+            harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures),
+            Harms),
+    groupHarms(Harms, Groups).
 
 %% music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [1, 0, 1, 0, 1, 0, 1]).
 
@@ -252,6 +270,7 @@ groupHarms([], []).
 % M - выход, который содержит список пар, всё кроме баса, как ключ, и список всех басов,
 % которые к нему подходят.
 % [N1 | N1S], [N2 | N2S], [N3 | N3S], [N4 | N4S], [W | WS], [T | TS], [M | MS]
+% структура p() - это пара из элементов "всё, кроме баса", басы
 groupHarms([p(Top, Bass) | Pairs], [g(Top, M) | MS]) :-
     group1(Top, Bass, Pairs, M, R),
     groupHarms(R, MS).

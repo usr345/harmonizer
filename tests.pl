@@ -1,6 +1,7 @@
 %-*- mode: prolog-*-
 :- use_module(pitch_arithm).
 :- use_module(harm).
+:- use_module(utility).
 :- discontiguous(run_test/1).
 :- discontiguous(test/4).
 :- discontiguous(test_harm/1).
@@ -190,21 +191,9 @@ runTestGroupHarm(T) :-
 %% test_harm(Test) :- test_harm_neg_example(Test, [N1, N2, N3, N4, Types, Widths, Measures, Strengths]),
 %%                    \+ harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures).
 %% test2(G), length(G, L), member(g(_, F), G), length(F, FL).
-test2(Groups) :- test_harm_example(
-                     melody4, [N1, _, _, _, _, _, Measures, Strengths]),
-                 findall(p([N1, N2, N3, Types, Widths], N4),
-                         harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures),
-                         Harms),
-                 groupHarms(Harms, Groups).
-
-% выбирает список базов [B1 | B1S], которые не хуже при гармонизации, чем [B2 | B2S]
-% [T | TS] - список теноров
-% [B1 | B1S] - первый список басов, который isBetter
-% [B2 | B2S] - второй список басов, который не isBetter
-% Если первый nearest_down, то второй нам не важен
-isBetter([T | TS], [_ | B2S], [B1 | B1S]) :- nearest_down(T, B1), isBetter(TS, B1S, B2S), !.
-% Если второй не nearest_down, то первый нам не важен
-isBetter([T | TS], [B2 | B2S], [_ | B1S]) :- \+ nearest_down(T, B2), isBetter(TS, B1S, B2S).
+test_group_harm(Groups) :- test_harm_example(
+                               melody4, [N1, _, _, _, _, _, Measures, Strengths]),
+                           group_harm(N1, _, _, _, _, _, Strengths, Measures, Groups).
 
 are_identical(X, Y) :-
     X == Y.
@@ -215,24 +204,14 @@ filterList(A, In, Out) :-
 is_in_supremum(_, []).
 is_in_supremum(Comparator, [X | XS]) :- \+ apply(Comparator, [X]), is_in_supremum(Comparator, XS).
 
-% В Comparator содержится isBetter([Tenor | TS])
-find_supremum(Comparator, List, OutBestBass) :-
-    % List - это список басов
-    % Перебираем все возможные басы из списка в поисках наилучшего
-    append([A, [OutBestBass], Z], List),
-    % Перебирает все возможные пары голосов
-    % В T = [isBetter, [Tenor | TS]]
-    Comparator =.. T,
-    % В T2 := [isBetter, [Tenor | TS], OutBestBass]
-    append(T, [OutBestBass], T2),
-    % C1 := isBetter([Tenor | TS], OutBestBass)
-    C1 =.. T2,
-    is_in_supremum(C1, A),
-    is_in_supremum(C1, Z).
-
 run_test_find_supremum() :- findall(Out,
                                        find_supremum(append([1]), [[1,2], [2], [1,5], [3]], Out),
                                        AllOuts),
                                same_elements(AllOuts, [[1,2], [1,5], [3]]).
 
 %% test(test33, , group1/5, positive).
+
+test_dup(X) :- findall(p([N1, N2, N3, Types, Widths], N4),
+                           harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures),
+                           Harms),
+               append([_, [X], Y], Harms), member(X, Y).
