@@ -23,7 +23,15 @@ note_sub(pitch(Octave1, Stage1, Alter1), pitch(Octave2, Stage2, Alter2), interva
    Stage #= Octave1 * 7 + Stage1 - Octave2 * 7 - Stage2,
    Semitones #= Pitch1 - Pitch2.
 
-add_interval(Note1, Interval, Note2) :- note_sub(Note2, Note1, Interval).
+% also works, but harder:
+%add_interval(Note1, Interval, Note2) :- note_sub(Note2, Note1, Interval).
+add_interval(pitch(Octave1, Stage1, Alter1), interval(Stage, Semitones), pitch(Octave2, Stage2, Alter2)) :-
+   abs_pitch(pitch(Octave1, Stage1, Alter1), Pitch1),
+   AbsStage #= Octave1 * 7 + Stage1 + Stage,
+   Octave2 #= AbsStage div 7,
+   Stage2 #= AbsStage - Octave2*7,
+   abs_pitch(pitch(Octave2, Stage2, 0), RawPitch2),
+   Alter2 #= Pitch1 + Semitones - RawPitch2.
 
 interval_less(interval(_, Semi1), interval(_, Semi2)) :- Semi1 #< Semi2.
 interval_le(X, X).
