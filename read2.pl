@@ -41,7 +41,7 @@ getNotesFromMeasureInternal([element(note, _, N) | Tail], MeasureNumber, Mult, N
        getNotesFromMeasureInternal(Tail, MeasureNumber, Mult, MT, Time + Duration * Mult),
        NTime #= Time,
        NDur #= Duration * Mult,
-       appendNote(N, ts(MeasureNumber,NTime), Voice, NDur, MT, Notes),!.
+       appendNote(N, ts(MeasureNumber, NTime), Voice, NDur, MT, Notes),!.
 
 getNotesFromMeasureInternal([element(backup, _, B) | Tail], MeasureNumber, Mult, Notes, Time) :-
        member(element(duration, _, [Dur]), B),
@@ -194,34 +194,61 @@ getChords(Key, Notes, Chords) :-
        same_length(TsList, Chords),
        forceVoices(Key, TsList, Notes, Chords).
 
+%           min or maj
+%           |  harm1 note
+%           |  |  harm2 note
+%           |  |  |  harm2 note alteration
+convertNote(_, 1, 0, 0).
+convertNote(_, 2, 1, 0).
+convertNote(_, 3, 2, 0).
+convertNote(_, 4, 3, 0).
+convertNote(_, 5, 4, 0).
+convertNote(_, 6, 5, 0).
+convertNote(maj, 7, 6, 0).
+convertNote(min, 7, 6, 1).
 
+convertMeasureTS(start, 0).
+convertMeasureTS(not_start, _).
 
-checkCorrectAlter(_, 0, 0).
-checkCorrectAlter(_, 1, 0).
-checkCorrectAlter(_, 2, 0).
-checkCorrectAlter(_, 3, 0).
-checkCorrectAlter(_, 4, 0).
-checkCorrectAlter(_, 5, 0).
-checkCorrectAlter(maj, 6, 0).
-checkCorrectAlter(min, 6, 1).
+fraqEq(fraq(Nom1,Den1),fraq(Nom2,Den2)) :-
+       Nom1 * Den2 #= Nom2 * Den1.
 
-checkCorrectAlters(Scale, [chord([stage(_, S1, A1), stage(_, S2, A2), stage(_, S3, A3), stage(_, S4, A4)], _, _, _) | Tail ]) :-
-   checkCorrectAlter(Scale, S1, A1),
-   checkCorrectAlter(Scale, S2, A2),
-   checkCorrectAlter(Scale, S3, A3),
-   checkCorrectAlter(Scale, S4, A4),
-   checkCorrectAlters(Scale, Tail).
+% начало такта имеет силу 4
+convertStrengthTS(4, 0, _).
+% размеры 2/4, 2/8...
+convertStrengthTS(3, TS, beats(2, Den)) :- fraqEq(fraq(TS,Den), fraq(1,1)).
+convertStrengthTS(2, TS, beats(2, Den)) :- fraqEq(fraq(TS,Den), fraq(1,2)).
+convertStrengthTS(2, TS, beats(2, Den)) :- fraqEq(fraq(TS,Den), fraq(3,2)).
+convertStrengthTS(1, _, beats(2, _)).
+% размеры 3/4, 3/8...
+convertStrengthTS(3, TS, beats(3, Den)) :- fraqEq(fraq(TS,Den), fraq(1,1)).
+convertStrengthTS(3, TS, beats(3, Den)) :- fraqEq(fraq(TS,Den), fraq(2,1)).
+convertStrengthTS(1, _, beats(3, _)).
+% размеры 4/4, 4/8...
+convertStrengthTS(3, TS, beats(4, Den)) :- fraqEq(fraq(TS,Den), fraq(2,1)).
+convertStrengthTS(2, TS, beats(4, Den)) :- fraqEq(fraq(TS,Den), fraq(1,1)).
+convertStrengthTS(2, TS, beats(4, Den)) :- fraqEq(fraq(TS,Den), fraq(3,1)).
+convertStrengthTS(1, _, beats(4, _)).
+% размеры 6/4, 6/8...
+convertStrengthTS(3, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(3,1)).
+convertStrengthTS(2, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(1,1)).
+convertStrengthTS(2, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(2,1)).
+convertStrengthTS(2, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(4,1)).
+convertStrengthTS(2, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(5,1)).
+convertStrengthTS(1, _, beats(6, _)).
 
-checkCorrectAlters(_, []).
+% конвертировать между форматами harm1 и harm2
+convertMusicFormat(Scale, Beats, [(O1, SA1) | Tail1], [(O2, SA2) | Tail2], [(O3, SA3) | Tail3], [(O4, SA4) | Tail4],
+                     [Strength | Strengths], [Measure| Measures],
+                   [chord([stage(O1, SB1, AB1), stage(O2, SB2, AB2), stage(O3, SB3, AB3), stage(O4, SB4, AB4)], ts(_, TS), _, _) | Tail ]) :-
+    convertNote(Scale, SA1, SB1, AB1),
+    convertNote(Scale, SA2, SB2, AB2),
+    convertNote(Scale, SA3, SB3, AB3),
+    convertNote(Scale, SA4, SB4, AB4),
+    convertMeasureTS(Measure, TS),
+    convertMeasureTS(Measure, TS),
+    convertStrengthTS(Strength, TS, Beats),
+    convertStrengthTS(Strength, TS, Beats),
+    convertMusicFormat(Scale, Beats, Tail1, Tail2, Tail3, Tail4, Strengths, Measures, Tail).
 
-convertMusicFormat([(O1, S1) | Tail1], [(O2, S2) | Tail2], [(O3, S3) | Tail3], [(O4, S4) | Tail4],
-                   [chord([stage(O1, S1, A1), stage(O2, S2, A2), stage(O3, S3, A3), stage(O4, S4, A4)], _, _, _) | Tail ]) :-
-    convertMusicFormat(Tail1, Tail2, Tail3, Tail4, Tail).
-
-convertMusicFormat([], [], [], [], []).
-
-% конвертировать разные форматы друг в друга, проверяя корректность
-% альтераций
-convertAndCheck(Scale, N1, N2, N3, N4, Chords) :-
-   convertMusicFormat(N1, N2, N3, N4, Chords),
-   checkCorrectAlters(Scale, Chords).
+convertMusicFormat(_, _, [], [], [], [], [], [], []).
