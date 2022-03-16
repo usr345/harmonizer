@@ -1,6 +1,7 @@
 :- [utility].
 
 :- use_module(pitch_arithm2).
+:- use_module(library(clpfd)).
 :- use_module(library(sgml_write)).
 
 fifthMatch(0, 0).
