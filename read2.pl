@@ -252,3 +252,13 @@ convertMusicFormat(Scale, Beats, [(O1, SA1) | Tail1], [(O2, SA2) | Tail2], [(O3,
     convertMusicFormat(Scale, Beats, Tail1, Tail2, Tail3, Tail4, Strengths, Measures, Tail).
 
 convertMusicFormat(_, _, [], [], [], [], [], [], []).
+
+readFileAndConvert(
+       File, 
+       % read1 data:
+       Notes1, Notes2, Notes3, Notes4, Strength, Measures, 
+       % read2 data:
+       Chords, music_attrs(Key, Beats)) :-
+    getMusicFromXML(File, Scale, Notes, music_attrs(Key, Beats)),
+    getChords(Key, Notes, Chords),
+    convertMusicFormat(Scale, Beats, Notes1, Notes2, Notes3, Notes4, Strength, Measures, Chords).

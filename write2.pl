@@ -172,24 +172,6 @@ convertMeasuresToElements([Element0 | Elements], [Measure | Measures], Attrs) :-
 	getMeasureElement(Element0, Measure, Attrs),
 	convertMeasuresToElementsNoAttrs(Elements, Measures).
 
-testWrite(File) :- 
-	getMeasureChordElements(Notes, [
-	chord([
-		stage(5,4,-1),
-		stage(4,3,0),
-		stage(3,2,1),
-		stage(2,1,0)
-	], ts(0,0), duration(360), 0),
-	chord([
-		stage(5,5,-1),
-		stage(4,4,0),
-		stage(3,3,1),
-		stage(2,2,0)
-	], ts(0,360), duration(360), 0)], 0),
-	getFirstMeasureAttrs(Attrs,  music_attrs(key(0, 0, maj), beats(4, 720))),
-	getMXMLbaseElements(XML, [element("measure", [number="1"], [Attrs|Notes])]),
-	writeMXML(File, XML).
-
 writeChordsToFile(File, Chords, MusicAttrs) :-
 	getFirstMeasureAttrs(Attrs,  MusicAttrs),
 	convertChordListToMeasureList(Chords, Measures),
@@ -198,7 +180,7 @@ writeChordsToFile(File, Chords, MusicAttrs) :-
 	writeMXML(File, XML).
 
 
-writeChordsToFile(File) :-
+testWriteChordsToFile(File) :-
 	writeChordsToFile(File, [
 	chord([
 		stage(5,4,-1),
@@ -211,7 +193,8 @@ writeChordsToFile(File) :-
 		stage(4,4,0),
 		stage(3,3,1),
 		stage(2,2,0)
-	], ts(0,360), duration(360), 0),chord([
+	], ts(0,360), duration(360), 0),
+	chord([
 		stage(5,4,-1),
 		stage(4,3,0),
 		stage(3,2,1),
