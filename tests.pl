@@ -201,7 +201,7 @@ runTest_isBetter(T) :- test(T, Tenor, Bass1, Bass2, isBetter/3, negative),
                       \+ isBetter(Tenor, Bass1, Bass2).
 
 
-test(test34, [note(5, 1), note(5, 3)] [[note(4, 1), note(4, 1)], [note(3, 1), note(3, 1)], [note(4, 4), note(4, 1)]], find_supremum/3, positive).
+test(test34, [note(5, 1), note(5, 3)], [[note(4, 1), note(4, 1)], [note(3, 1), note(3, 1)], [note(4, 4), note(4, 1)]], find_supremum/3, positive).
 
 runTestfind_supremum(T) :- test(T, Tenor, Bases, find_supremum/3, positive),
                            find_supremum(isBetter(Tenor), Bases, BestBases),
