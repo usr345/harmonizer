@@ -137,14 +137,14 @@ test_harm_example(melody3, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note
 % A-min
 test_harm_example(melody4,
                   [
-                  [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)],
+                  [note(5, 5), note(5, 6), note(5, 5), note(5, 3)],%, note(5, 4), note(5, 2), note(5, 1)],
                   [note(5, 3), note(5, 4), note(5, 2), note(5, 1), note(5, 1), note(4, 7), note(4, 5)],
                   [note(5, 1), note(5, 1), note(4, 7), note(4, 5), note(4, 6), note(4, 5), note(4, 3)],
                   [note(4, 1), note(3, 4), note(3, 5), note(4, 1), note(3, 4), note(3, 5), note(4, 1)],
                   [ta, sa, da, ta, sa, da, ta],
-                  [narrow, narrow, narrow, narrow, narrow, narrow, narrow],
-                  [start, non_start, start, non_start, start, non_start, start],
-                  [2, 1, 2, 1, 2, 1, 2]
+                  [narrow, narrow, narrow, narrow],%, narrow, narrow, narrow],
+                  [start, non_start, start, non_start],%, start, non_start, start],
+                  [2, 1, 2, 1]%, 2, 1, 2]
                   ]).
 
 test_harm(Test) :- test_harm_example(Test, [N1, N2, N3, N4, Types, Widths, Measures, Strengths]),
@@ -186,7 +186,26 @@ runTestGroupHarm(T) :-
     same_elements(X, B1),
     same_elements(Y, R1).
 
+% Тестовые данные для find_supremum
+% 2 баса должны быть сведены
+% 1 бас несводим к предыдущим двум
+test(test33, [note(5, 1), note(5, 3)], [note(4, 1), note(4, 1)], [note(3, 1), note(3, 1)], isBetter/3, positive).
+test(test34, [note(5, 1), note(5, 3)], [note(3, 1), note(3, 1)], [note(4, 1), note(4, 1)], isBetter/3, negative).
+% первая лучше у первого, а вторая лучше у второго
+test(test35, [note(5, 1), note(5, 3)], [note(4, 1), note(3, 1)], [note(3, 1), note(5, 1)], isBetter/3, negative).
 
+runTest_isBetter(T) :- test(T, Tenor, Bass1, Bass2, isBetter/3, positive),
+                      isBetter(Tenor, Bass1, Bass2).
+
+runTest_isBetter(T) :- test(T, Tenor, Bass1, Bass2, isBetter/3, negative),
+                      \+ isBetter(Tenor, Bass1, Bass2).
+
+
+test(test34, [note(5, 1), note(5, 3)], [[note(4, 1), note(4, 1)], [note(3, 1), note(3, 1)], [note(4, 4), note(4, 1)]], find_supremum/3, positive).
+
+runTestfind_supremum(T) :- test(T, Tenor, Bases, find_supremum/3, positive),
+                           find_supremum(isBetter(Tenor), Bases, BestBases),
+                           write(BestBases).
 
 %% test_harm(Test) :- test_harm_neg_example(Test, [N1, N2, N3, N4, Types, Widths, Measures, Strengths]),
 %%                    \+ harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures).
@@ -201,15 +220,52 @@ are_identical(X, Y) :-
 filterList(A, In, Out) :-
     exclude(are_identical(A), In, Out).
 
+% С помощью предиката Comparator проверяет, что Comparator не выполняется для
 is_in_supremum(_, []).
 is_in_supremum(Comparator, [X | XS]) :- \+ apply(Comparator, [X]), is_in_supremum(Comparator, XS).
 
 run_test_find_supremum() :- findall(Out,
-                                       find_supremum(append([1]), [[1,2], [2], [1,5], [3]], Out),
-                                       AllOuts),
-                               same_elements(AllOuts, [[1,2], [1,5], [3]]).
+                                    find_supremum(append([1]), [[1,2], [2], [1,5], [3]], Out),
+                                    AllOuts),
+                            same_selements(AllOuts, [[1,2], [1,5], [3]]).
 
-%% test(test33, , group1/5, positive).
+% A-min
+test_harm_example(melodyMin,
+                  [
+                  [note(5, 5)],
+                  [start],
+                  [2]
+                  ]).
+
+test_harm_example(melodyMin2,
+                  [
+                  [note(5, 5), note(5, 6)],
+                  [start, non_start],
+                  [2, 1]
+                  ]).
+
+
+test_harm_min(N1, Types, N2, N3, N4, Widths, Strengths, Measures) :- test_harm_example(
+                                                                         melodyMin, [N1, Measures, Strengths]),
+                                                                     harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures).
+
+test_group_harm_min(Groups) :- test_harm_example(
+                                   melodyMin, [N1, Measures, Strengths]),
+                               group_harm(N1, N2, N3, N4, Types,Widths, Strengths, Measures, Groups).
+
+test_harm_min2(N1, Types, N2, N3, N4, Widths, Strengths, Measures) :- test_harm_example(
+                                                                         melodyMin2, [N1, Measures, Strengths]),
+                                                                     harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures).
+
+
+test_group_harm_min(Groups) :- test_harm_example(
+                                   melodyMin, [N1, Measures, Strengths]),
+                               group_harm(N1, N2, N3, N4, Types,Widths, Strengths, Measures, Groups).
+
+
+test_group_harm_min2(Groups) :- test_harm_example(
+                                    melodyMin2, [N1, Measures, Strengths]),
+                                group_harm(N1, N2, N3, N4, Types,Widths, Strengths, Measures, Groups).
 
 test_dup(X) :- findall(p([N1, N2, N3, Types, Widths], N4),
                            harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures),

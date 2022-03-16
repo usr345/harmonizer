@@ -86,7 +86,7 @@ altitude2note(S, T, A, note(O, N)) :-
 altitudes2notes(_, _, [], []).
 altitudes2notes(S, T, [A|AS], [N|NS]) :- altitude2note(S, T, A, N), altitudes2notes(S, T, AS, NS).
 
-% соответствие между номером мажорной ступени в хроматической гамме
-% и номером ступени в мажорной тональности
+% для обеих тональностей
+% соответствие между номер ступени в хроматической гамме -> номер ступени в тональности
 tons(maj, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)]).
 tons(min, [stage(0,1), stage(2,2), stage(3, 3), stage(5, 4), stage(7, 5), stage(8, 6), stage(11, 7)]).

@@ -198,9 +198,10 @@ check_measures([_, X | ChordTypes], [_, non_start | Ss]) :-
 % [B1 | B1S] - первый список басов, который isBetter
 % [B2 | B2S] - второй список басов, который не isBetter
 % Если первый nearest_down, то второй нам не важен
-isBetter([T | TS], [_ | B2S], [B1 | B1S]) :- nearest_down(T, B1), isBetter(TS, B1S, B2S), !.
+isBetter([], [], []).
+isBetter([T | TS], [B1 | B1S], [_ | B2S]) :- nearest_down(T, B1), isBetter(TS, B1S, B2S), !.
 % Если второй не nearest_down, то первый нам не важен
-isBetter([T | TS], [B2 | B2S], [_ | B1S]) :- \+ nearest_down(T, B2), isBetter(TS, B1S, B2S).
+isBetter([T | TS], [_ | B1S], [B2 | B2S]) :- \+ nearest_down(T, B2), isBetter(TS, B1S, B2S).
 
 %% bass_normal(X, Y, Y, Z) :- right(X, Y), .
 
@@ -231,14 +232,13 @@ harm(N1, TDS, N2, N3, N4, W, Strength, Measures) :-
    \+ parocts([N1, N2, N3, N4]),
    \+ parq([N1, N2, N3, N4]).
 
-% Получает на вход то же, что и harm
+% Получает на вход то же, что и harm плюс выходная переменная Groups
 % после чего одинаковые гармонизации с разными басами помещает в
 % переменную Groups
-group_harm(N1, N2, N3, N4, Types, W, Strength, Measures, Groups) :-
+group_harm(N1, N2, N3, N4, Types, W, Strength, Measures, Harms) :-
     findall(p([N1, N2, N3, Types, Widths], N4),
             harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures),
-            Harms),
-    groupHarms(Harms, Groups).
+            Harms).
 
 %% music(test, [note(5, 5), note(5, 6), note(5, 5), note(5, 3), note(5, 4), note(5, 2), note(5, 1)], [2, 1, 2, 1, 2, 1, 2], [1, 0, 1, 0, 1, 0, 1]).
 
@@ -267,8 +267,9 @@ group1(Top, Bass, [p(Top1, Bass1) | TS], BS, [p(Top1, Bass1) | R]) :-
 
 % N1, N2, N3, N4, W, T
 groupHarms([], []).
-% M - выход, который содержит список пар, всё кроме баса, как ключ, и список всех басов,
-% которые к нему подходят.
+% M - выход, который содержит список пар:
+% * всё кроме баса, как ключ,
+% * список всех басов, которые к нему подходят.
 % [N1 | N1S], [N2 | N2S], [N3 | N3S], [N4 | N4S], [W | WS], [T | TS], [M | MS]
 % структура p() - это пара из элементов "всё, кроме баса", басы
 groupHarms([p(Top, Bass) | Pairs], [g(Top, M) | MS]) :-
