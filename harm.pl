@@ -198,7 +198,7 @@ check_measures([_, X | ChordTypes], [_, non_start | Ss]) :-
 % [B1 | B1S] - первый список басов, который isBetter
 % [B2 | B2S] - второй список басов, который не isBetter
 % Если первый nearest_down, то второй нам не важен
-isBetter([], [], [])
+isBetter([], [], []).
 isBetter([T | TS], [B1 | B1S], [_ | B2S]) :- nearest_down(T, B1), isBetter(TS, B1S, B2S), !.
 % Если второй не nearest_down, то первый нам не важен
 isBetter([T | TS], [_ | B1S], [B2 | B2S]) :- \+ nearest_down(T, B2), isBetter(TS, B1S, B2S).
