@@ -28,7 +28,7 @@ getFirstMeasureAttrs(Element, music_attrs(Key, beats(Nom, Den))) :-
 	number_string(Nom, SNom),
 	number_string(NormedDen, SDen),
 	Element = element("attributes", [], [
-		element("divisions", [], ["180"]),
+		element("divisions", [], ["720"]),
 		element("key", [], [
 			element("fifths", [], [SFifth])
 		]),

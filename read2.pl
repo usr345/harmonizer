@@ -198,14 +198,16 @@ getChords(Key, Notes, Chords) :-
 %           |  harm1 note
 %           |  |  harm2 note
 %           |  |  |  harm2 note alteration
-convertNote(_, 1, 0, 0).
-convertNote(_, 2, 1, 0).
-convertNote(_, 3, 2, 0).
-convertNote(_, 4, 3, 0).
-convertNote(_, 5, 4, 0).
-convertNote(_, 6, 5, 0).
-convertNote(maj, 7, 6, 0).
-convertNote(min, 7, 6, 1).
+%convertNote(_, 1, 0, 0).
+%convertNote(_, 2, 1, 0).
+%convertNote(_, 3, 2, 0).
+%convertNote(_, 4, 3, 0).
+%convertNote(_, 5, 4, 0).
+%convertNote(_, 6, 5, 0).
+%convertNote(maj, 7, 6, 0).
+%convertNote(min, 7, 6, 1).
+
+convertNote(_, X, Y, 0) :- X #= Y+1.
 
 convertMeasureTS(start, 0).
 convertMeasureTS(non_start, X) :- X #> 0.
