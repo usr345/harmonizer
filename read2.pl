@@ -198,47 +198,49 @@ getChords(Key, Notes, Chords) :-
 %           |  harm1 note
 %           |  |  harm2 note
 %           |  |  |  harm2 note alteration
-convertNote(_, 1, 0, 0).
-convertNote(_, 2, 1, 0).
-convertNote(_, 3, 2, 0).
-convertNote(_, 4, 3, 0).
-convertNote(_, 5, 4, 0).
-convertNote(_, 6, 5, 0).
-convertNote(maj, 7, 6, 0).
-convertNote(min, 7, 6, 1).
+%convertNote(_, 1, 0, 0).
+%convertNote(_, 2, 1, 0).
+%convertNote(_, 3, 2, 0).
+%convertNote(_, 4, 3, 0).
+%convertNote(_, 5, 4, 0).
+%convertNote(_, 6, 5, 0).
+%convertNote(maj, 7, 6, 0).
+%convertNote(min, 7, 6, 1).
+
+convertNote(_, X, Y, 0) :- X #= Y+1.
 
 convertMeasureTS(start, 0).
-convertMeasureTS(not_start, _).
+convertMeasureTS(non_start, X) :- X #> 0.
 
 fraqEq(fraq(Nom1,Den1),fraq(Nom2,Den2)) :-
        Nom1 * Den2 #= Nom2 * Den1.
 
 % начало такта имеет силу 4
-convertStrengthTS(4, 0, _).
+convertStrengthTS(4, 0, _) :- !.
 % размеры 2/4, 2/8...
-convertStrengthTS(3, TS, beats(2, Den)) :- fraqEq(fraq(TS,Den), fraq(1,1)).
-convertStrengthTS(2, TS, beats(2, Den)) :- fraqEq(fraq(TS,Den), fraq(1,2)).
-convertStrengthTS(2, TS, beats(2, Den)) :- fraqEq(fraq(TS,Den), fraq(3,2)).
+convertStrengthTS(3, TS, beats(2, Den)) :- fraqEq(fraq(TS,Den), fraq(1,1)), !.
+convertStrengthTS(2, TS, beats(2, Den)) :- fraqEq(fraq(TS,Den), fraq(1,2)), !.
+convertStrengthTS(2, TS, beats(2, Den)) :- fraqEq(fraq(TS,Den), fraq(3,2)), !.
 convertStrengthTS(1, _, beats(2, _)).
 % размеры 3/4, 3/8...
-convertStrengthTS(3, TS, beats(3, Den)) :- fraqEq(fraq(TS,Den), fraq(1,1)).
-convertStrengthTS(3, TS, beats(3, Den)) :- fraqEq(fraq(TS,Den), fraq(2,1)).
+convertStrengthTS(3, TS, beats(3, Den)) :- fraqEq(fraq(TS,Den), fraq(1,1)), !.
+convertStrengthTS(3, TS, beats(3, Den)) :- fraqEq(fraq(TS,Den), fraq(2,1)), !.
 convertStrengthTS(1, _, beats(3, _)).
 % размеры 4/4, 4/8...
-convertStrengthTS(3, TS, beats(4, Den)) :- fraqEq(fraq(TS,Den), fraq(2,1)).
-convertStrengthTS(2, TS, beats(4, Den)) :- fraqEq(fraq(TS,Den), fraq(1,1)).
-convertStrengthTS(2, TS, beats(4, Den)) :- fraqEq(fraq(TS,Den), fraq(3,1)).
+convertStrengthTS(3, TS, beats(4, Den)) :- fraqEq(fraq(TS,Den), fraq(2,1)), !.
+convertStrengthTS(2, TS, beats(4, Den)) :- fraqEq(fraq(TS,Den), fraq(1,1)), !.
+convertStrengthTS(2, TS, beats(4, Den)) :- fraqEq(fraq(TS,Den), fraq(3,1)), !.
 convertStrengthTS(1, _, beats(4, _)).
 % размеры 6/4, 6/8...
-convertStrengthTS(3, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(3,1)).
-convertStrengthTS(2, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(1,1)).
-convertStrengthTS(2, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(2,1)).
-convertStrengthTS(2, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(4,1)).
-convertStrengthTS(2, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(5,1)).
+convertStrengthTS(3, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(3,1)), !.
+convertStrengthTS(2, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(1,1)), !.
+convertStrengthTS(2, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(2,1)), !.
+convertStrengthTS(2, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(4,1)), !.
+convertStrengthTS(2, TS, beats(6, Den)) :- fraqEq(fraq(TS,Den), fraq(5,1)), !.
 convertStrengthTS(1, _, beats(6, _)).
 
 % конвертировать между форматами harm1 и harm2
-convertMusicFormat(Scale, Beats, [(O1, SA1) | Tail1], [(O2, SA2) | Tail2], [(O3, SA3) | Tail3], [(O4, SA4) | Tail4],
+convertMusicFormat(Scale, Beats, [note(O1, SA1) | Tail1], [note(O2, SA2) | Tail2], [note(O3, SA3) | Tail3], [note(O4, SA4) | Tail4],
                      [Strength | Strengths], [Measure| Measures],
                    [chord([stage(O1, SB1, AB1), stage(O2, SB2, AB2), stage(O3, SB3, AB3), stage(O4, SB4, AB4)], ts(_, TS), _, _) | Tail ]) :-
     convertNote(Scale, SA1, SB1, AB1),
@@ -252,3 +254,13 @@ convertMusicFormat(Scale, Beats, [(O1, SA1) | Tail1], [(O2, SA2) | Tail2], [(O3,
     convertMusicFormat(Scale, Beats, Tail1, Tail2, Tail3, Tail4, Strengths, Measures, Tail).
 
 convertMusicFormat(_, _, [], [], [], [], [], [], []).
+
+readFileAndConvert(
+       File, Scale,
+       % read1 data:
+       Notes1, Notes2, Notes3, Notes4, Strength, Measures, 
+       % read2 data:
+       Chords, music_attrs(Key, Beats)) :-
+    getMusicFromXML(File, Scale, Notes, music_attrs(Key, Beats)),
+    getChords(Key, Notes, Chords),
+    convertMusicFormat(Scale, Beats, Notes1, Notes2, Notes3, Notes4, Strength, Measures, Chords).
