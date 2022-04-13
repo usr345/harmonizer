@@ -3,9 +3,15 @@
 \usepackage[utf8]{inputenc}
 \geometry{tmargin=2cm,bmargin=2cm,lmargin=2cm,rmargin=2cm}
 \usepackage[main=russian, english]{babel}
+\usepackage{fontspec}
+\usepackage{ccfonts}
+\usepackage{noto-serif}
+\usepackage{noto-sans}
+\usepackage{noto-mono}
+\usepackage{minted}
 \usepackage{graphicx}
 \usepackage{amsmath}
-\pagenumbering{gobble}
+\begin{document}
 Определения:
 
 \begin{itemize}
@@ -13,7 +19,6 @@
 \item Аккорд --- массив из 4-х нот, заданных по определённым правилам.
 \end{itemize}
 
-\begin{document}
 \begin{enumerate}
 \item Ноты должны принадлежать одной из 3-х функций: T, D, S.
 \item Аккорды могут быть заданы в двух расположениях: тесном и широком.
@@ -50,5 +55,88 @@ Chords = [
   chord([stage(3, 4, 0), _5288, _5294, _5300], ts(1, 0), duration(240), type(_5278)),
   chord([stage(3, 6, 0), _7348, _7354|...], ts(1, 240), duration(240), type(_7338)),
   chord([stage(4, 2, 0), _9408|...], ts(1, 480), duration(240), type(_9398))].
+\end{minted}
+
+\section{musicXML}
+
+Формат для хранения музыки. Рассмотрим простейший пример XML файла:
+
+\begin{minted}[breaklines, breakanywhere, tabsize=2]{xml}
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE score-partwise PUBLIC
+  "-//Recordare//DTD MusicXML 4.0 Partwise//EN"
+  "http://www.musicxml.org/dtds/partwise.dtd">
+
+<!-- Корневой элемент, в котором содержатся части произведения -->
+<score-partwise version="4.0">
+  <part-list>
+  <!-- Описание частей в файле -->
+    <score-part id="P1">
+      <part-name>Music</part-name>
+      <score-instrument id="Piano">
+        <instrument-name>Piano</instrument-name>
+      </score-instrument>
+    </score-part>
+  </part-list>
+
+  <part id="P1">
+    <measure number="1">
+    <!-- ... -->
+    </measure>
+    <measure number="2">
+    <!-- ... -->
+    </measure>
+    <!-- ... -->
+    <measure number="N">
+    <!-- ... -->
+    </measure>
+  </part>
+</score-partwise>
+\end{minted}
+
+Элементы {\tt measure} представляют собой такты с нотами:
+
+\begin{minted}[breaklines, breakanywhere, tabsize=2]{xml}
+<measure number="1">
+  <!-- Свойства данного такта -->
+  <attributes>
+    <divisions>1</divisions>
+    <!-- Тональность: номер прохода по квинтовому кругу -->
+    <!-- +1 - диезы, -1 - бемоли -->
+    <key>
+      <fifths>1</fifths>
+    </key>
+    <!-- Размер -->
+    <time>
+      <!-- Кол-во долей в такте -->
+      <beats>4</beats>
+      <!-- Длительность ноты одной доле -->
+      <beat-type>4</beat-type>
+    </time>
+    <staves>2</staves>
+    <!-- Необязательный элемент: ключевой знак на нотном стане -->
+    <!-- В данном случае: скрипичный ключ -->
+    <clef number="1">
+      <sign>G</sign>
+      <line>2</line>
+    </clef>
+    <!-- и басовый ключ -->
+    <clef number="2">
+      <sign>F</sign>
+      <line>4</line>
+    </clef>
+  </attributes>
+  <note>
+    <staff>1</staff>
+    <voice>2</voice>
+    <pitch>
+      <step>C</step>
+      <alter>0</alter>
+      <octave>4</octave>
+    </pitch>
+    <duration>2</duration>
+    <type>half</type>
+  </note>
+</measure>
 \end{minted}
 \end{document}
