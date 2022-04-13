@@ -1,4 +1,8 @@
 %-*- mode: prolog-*-
+:- module(tests, [
+	test/4, run_test/1
+	]).
+
 :- use_module(pitch_arithm).
 :- use_module(harm).
 :- use_module(utility).
@@ -8,6 +12,9 @@
 
 test(test1, [note(1, 5), note(3, 5)], stage_less/2, positive).
 test(test2, [note(1, 5), note(1, 6)], stage_less/2, positive).
+
+%% run_test(Test) :- test(Test, Params, Pred/2, positive),
+%%                   apply(Pred, Params).
 
 run_test(Test) :- test(Test, [N1, N2], stage_less/2, positive),
                        stage_less(N1, N2).
