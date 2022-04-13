@@ -1,0 +1,11 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[russian, english]{babel}
+\begin{document}
+\begin{tabular}{ | l | l | }
+  \hline<% each items, item %>
+    <%= item.name %> & <%= item.tested %>\\
+    \hline<% end %>
+\end{tabular}
+\end{document}
