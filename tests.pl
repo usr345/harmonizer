@@ -17,6 +17,7 @@ run_test(Test) :- test(Test, Params, Pred/_, negative),
                   \+ apply(Pred, Params).
 
 run_test(Test) :- test(Test, Params, Pred/_, unique),
+		  % First - это все элементы массива Params, кроме последнего элемента
                   append(First, [Val], Params),
                   % вызываем Pred со всеми параметрами, кроме последнего
                   % в него записываем переменную X
@@ -78,16 +79,18 @@ test(test22_3, [[a, b, c, a], [c, a, b]], same_elements/2, negative).
 test(test22_4, [[a, b, c, a, d], [c, a, a, b]], same_elements/2, negative).
 test(test22_5, [[a], []], same_elements/2, negative).
 
+% 7 - тоника в G
+% далее идет мажорный лад лад
+% 12 - абсолютная величина ноты C 1-й октавы. В тональности G-maj 4 ступень 0-й октавы
+test(test25, [7, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)], 12, note(0, 4)], altitude2note/4, unique).
+test(test26, [7, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)], 6, note(-1, 7)], altitude2note/4, unique).
 
-test(test25, [7, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)], 12, note(0, 4)], altitude2note/4, positive).
-test(test26, [7, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)], 6, note(-1, 7)], altitude2note/4, positive).
-
-% Предикаты, на которые есть тесты
-predicates_tested(Module, Set) :- findall(P, (module_property(Module, exports(X)), member(P, X), test(_, _, P, _)), List),
-                                  list_to_set(List, Set).
-
-predicates_not_tested(Module, Set) :- findall(P, (module_property(Module, exports(X)), member(P, X), \+ test(_, _, P, _)), List),
-                                  list_to_set(List, Set).
+%% Предикаты, на которые есть тесты
+%predicates_tested(Module, Set) :- findall(P, (module_property(Module, exports(X)), member(P, X), test(_, _, P, _)), List),
+%                                  list_to_set(List, Set).
+%
+%predicates_not_tested(Module, Set) :- findall(P, (module_property(Module, exports(X)), member(P, X), \+ test(_, _, P, _)), List),
+%                                  list_to_set(List, Set).
 
 % Запрет на перенос одного типа аккорда со слабой доли на сильную
 test(test27, [[ta, sa, da, da, ta, da, ta, ta], [4, 2, 3, 1, 4, 2, 3, 1]], check_downbeat/2, positive).
@@ -128,9 +131,6 @@ test_harm_example(melody4,
 test_harm(Test) :- test_harm_example(Test, [N1, N2, N3, N4, Types, Widths, Measures, Strengths]),
                    %% parq([N1, N2, N3, N4]).
                    harm(N1, Types, N2, N3, N4, Widths, Strengths, Measures).
-
-run_test(Test) :- test(Test, [S, T, A, Val], altitude2note/4, positive),
-                  findall(X, altitude2note(S, T, A, X), [Val]).
 
 test(test31, [a, c, [p(a,d), p(b,e), p(b,f)], [c, d], [p(b,e), p(b,f)]], group1/5, positive).
 

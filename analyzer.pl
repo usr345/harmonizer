@@ -46,3 +46,13 @@ do_work(File, List) :-
     list_to_set(Terms, Terms1),
     maplist(converter, Terms1, List),
     write_to_file("output/output.tex", List).
+
+
+% Предикаты, на которые есть тесты
+predicates_tested(Module, Set) :- findall(P, (module_property(Module, exports(X)), member(P, X), test(_, _, P, _)), List),
+                                  list_to_set(List, Set).
+
+predicates_not_tested(Module, Set) :- findall(P, (module_property(Module, exports(X)), member(P, X), \+ test(_, _, P, _)), List),
+                                  list_to_set(List, Set).
+
+
