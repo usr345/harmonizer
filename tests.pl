@@ -23,6 +23,12 @@ run_test(Test) :- test(Test, Params, Pred/_, unique),
                   % Потом сравниваем, что результат в X равен Val.
                   findall(X, (append(First, [X], P), apply(Pred, P)), [Val]).
 
+run_test(Test) :- test(Test, Params, Pred/_, multiset),
+                  append(First, [Val], Params),
+                  findall(X, (append(First, [X], P), apply(Pred, P)), Res),
+		  same_elements(Res, Val).
+
+
 run_test_pred(Pred) :-
     forall(test(Test, _, Pred/_, _), run_test(Test)).
 
@@ -54,9 +60,11 @@ test(test17, [note(2, 1), note(1, 5)], nearest_down/2, positive).
 test(test18, [note(2, 3), note(1, 3)], nearest_down/2, positive).
 test(test19, [note(2, 5), note(2, 3)], nearest_down/2, positive).
 
+nearest_down_bass(N, Stage, X) :- nearest_down_bass(N, note(X, Stage)).
+
 % нота, [список разрешенных октав], ступень
-test(test20, [note(5, 3), [5, 4], 1], nearest_down_bass/2, positive).
-test(test21, [note(5, 3), [5, 4, 3], 3], nearest_down_bass/2, positive).
+test(test20, [note(5, 3), 1, [5, 4]], nearest_down_bass/3, multiset).
+test(test21, [note(5, 3), 3, [5, 4, 3]], nearest_down_bass/3, multiset).
 
 same_elements([], []).
 same_elements([X | XS], Y) :- append([A, [X], B], Y), % в Y-е встречается X?
@@ -70,10 +78,6 @@ test(test22_3, [[a, b, c, a], [c, a, b]], same_elements/2, negative).
 test(test22_4, [[a, b, c, a, d], [c, a, a, b]], same_elements/2, negative).
 test(test22_5, [[a], []], same_elements/2, negative).
 
-
-run_test(Test) :- test(Test, [N, Octs, Stage], nearest_down_bass/2, positive),
-                  findall(X, nearest_down_bass(N, note(X, Stage)), R),
-                  same_elements(R, Octs).
 
 test(test25, [7, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)], 12, note(0, 4)], altitude2note/4, positive).
 test(test26, [7, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)], 6, note(-1, 7)], altitude2note/4, positive).
