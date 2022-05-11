@@ -16,22 +16,17 @@ stage_less(note(Octave, Stage1), note(Octave, Stage2)) :- Stage1 #< Stage2.
 stage_le(note(Octave, Stage), note(Octave, Stage)).
 stage_le(Stage1, Stage2) :- stage_less(Stage1, Stage2).
 
-stages_eq(note(Octave, Stage), note(Octave, Stage)).
-
-% unused
-stage_to_abs(note(Octave, Stage), X) :- X #= Octave*7 + Stage.
-
-% unused
-stages_ne(note(Octave1, _), note(Octave2, _)) :- Octave1 #\= Octave2.
-stages_ne(note(Octave, Stage1), note(Octave, Stage2)) :- Stage1 #\= Stage2.
-
-notes_cmp(X, Y, 0) :- stages_eq(X, Y).
+notes_cmp(X, X, 0).
 notes_cmp(X, Y, -1) :- stage_less(X, Y).
 notes_cmp(X, Y, 1) :- stage_less(Y, X).
 
-less_then_oct(note(Octave, Stage), note(Octave, Stage)).
-less_then_oct(note(Octave1, Stage1), note(Octave2, Stage2)) :- nearest_down(note(Octave1, Stage1), note(Octave2, Stage2)).
-less_then_oct(note(Octave1, Stage1), note(Octave2, Stage2)) :- nearest_down(note(Octave2, Stage2), note(Octave1, Stage1)).
+% Ноиы находятся в ределах октавы:
+% либо ноты совпадают
+% либо Y находится ниже X в пределах октавы.
+% либо X находится ниже Y в пределах октавы.
+less_then_oct(X, X).
+less_then_oct(X, Y) :- nearest_down(X, Y).
+less_then_oct(X, Y) :- nearest_down(Y, X).
 
 notes_less_oct_arr([_]).
 notes_less_oct_arr([N1, N2 | T]) :- less_then_oct(N1, N2), notes_less_oct_arr([N2 | T]).

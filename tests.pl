@@ -55,11 +55,18 @@ test(test13, [note(2, 3), note(2, 3)], less_then_oct/2, positive).
 test(test14, [note(5, 3), note(5, 2)], less_then_oct/2, positive).
 test(test15, [note(5, 3), note(4, 2)], less_then_oct/2, negative).
 test(test16, [note(5, 3), note(2, 2)], less_then_oct/2, negative).
+test(test14_1, [[note(5, 3), note(5, 2), note(5, 2)]], notes_less_oct_arr/1, positive).
+test(test16_1, [[note(5, 3), note(2, 2)]], notes_less_oct_arr/1, negative).
+test(test16_2, [[note(4, 7), note(5, 3), note(6, 4)]], notes_less_oct_arr/1, negative).
 
 % задается нота 1, и по ней ищется нота 2, которая лежит ниже
 test(test17, [note(2, 1), note(1, 5)], nearest_down/2, positive).
 test(test18, [note(2, 3), note(1, 3)], nearest_down/2, positive).
 test(test19, [note(2, 5), note(2, 3)], nearest_down/2, positive).
+
+test(test19_1, [[note(2, 5), note(2, 3)], [note(1, 6), note(2, 1)]], nearests_down/2, positive).
+test(test19_2, [[note(2, 5), note(2, 3)], [note(1, 4), note(2, 3)]], nearests_down/2, negative).
+test(test19_3, [[note(2, 5), note(2, 3)], [note(1, 6), note(3, 4)]], nearests_down/2, negative).
 
 nearest_down_bass(N, Stage, X) :- nearest_down_bass(N, note(X, Stage)).
 
