@@ -2,10 +2,19 @@
 \usepackage[a4paper]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage[russian, english]{babel}
+\usepackage{float}
 \begin{document}
-\begin{tabular}{ | l | l | }
-  \hline<% each items, item %>
-    <%= item.name %> & <%= item.tested %>\\
+<% each files, file %>
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ | l | <% each headers, header %> r |<% end %> r | }
+  \hline
+  Name <% each headers, header %>& <%= header  %><% end %> & $\Sigma$\\
+  \hline<% each file.items, item %>
+    <%= item.name %> <%each item.tests, test %>& <%= test %><% end %> & <%= item.total %>\\
     \hline<% end %>
-\end{tabular}
+  \end{tabular}
+  \caption{<%= file.name %>}
+\end{table}
+<% end %>
 \end{document}

@@ -71,8 +71,8 @@ test(test19_3, [[note(2, 5), note(2, 3)], [note(1, 6), note(3, 4)]], nearests_do
 nearest_down_bass(N, Stage, X) :- nearest_down_bass(N, note(X, Stage)).
 
 % нота, [список разрешенных октав], ступень
-test(test20, [note(5, 3), 1, [5, 4]], nearest_down_bass/3, multiset).
-test(test21, [note(5, 3), 3, [5, 4, 3]], nearest_down_bass/3, multiset).
+test(test20, [note(5, 3), 1, [5, 4]], nearest_down_bass/2, multiset).
+test(test21, [note(5, 3), 3, [5, 4, 3]], nearest_down_bass/2, multiset).
 
 same_elements([], []).
 same_elements([X | XS], Y) :- append([A, [X], B], Y), % в Y-е встречается X?

@@ -55,6 +55,7 @@ nearest_down_bass(note(Octave1, Stage1), note(Octave2_down, Stage2)) :-
 nearests_down_bass([], []).
 nearests_down_bass([NoteA|ATail], [NoteB|BTail]) :- nearest_down_bass(NoteA, NoteB), nearests_down_bass(ATail, BTail).
 
+%% Соответствие между названием ноты и её абсолютной позицией на шкале
 shift('C', 0).
 shift('D', 2).
 shift('E', 4).
