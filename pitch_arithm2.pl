@@ -1,3 +1,4 @@
+%-*- mode: prolog-*-
 :- module(pitch_arithm2, [
               stage_pitch/2,
               note_sub/3,

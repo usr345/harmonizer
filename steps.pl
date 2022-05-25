@@ -1,4 +1,5 @@
 %-*- mode: prolog-*-
+:- module(steps, [scale1/2]).
 :- use_module(library(clpfd)).
 
 scale1('C', 0).
