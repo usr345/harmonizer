@@ -2,10 +2,14 @@
 :- use_module(library(clpfd)).
 :- use_module(steps).
 
-intervals(dim, [3, 6]).
-intervals(min, [3, 7]).
-intervals(maj, [4, 7]).
-intervals(aug, [4, 8]).
+intervals(dim, [[3, 6], [3, 9], [6, 9]]).
+intervals(min, [[3, 7], [4, 9], [5, 8]]).
+intervals(maj, [[4, 7], [3, 8], [5, 9]]).
+intervals(aug, [[4, 8], [4, 8], [4, 8]]).
+
+notes_intervals(0, [2, 4]).
+notes_intervals(1, [2, 5]).
+notes_intervals(2, [3, 5]).
 
 mod12(In, Out) :-
     Out #= mod(In, 12).
@@ -50,17 +54,22 @@ permut([X | T], List, N) :-
 % Type - тип аккорда: {dim, min, maj, aug}
 % Inversion - номер обращения (0, 1, 2)
 chord3(note(X, Alt), Type, Inversion, Chord) :-
+    Inversion #< 4,
     note2abs(note(X, Alt), Abs),
-    intervals(Type, Intervals),
+    intervals(Type, IntervalsList),
+    nth0(Inversion, IntervalsList, Intervals),
     maplist(plus(Abs), Intervals, Chord1),
     maplist(mod12, Chord1, Chord2),
     notes_nums(X, N_0),
-    N_1 #= mod(N_0 + 2, 7),
-    N_2 #= mod(N_0 + 4, 7),
+    % вычисляем дельты для нот
+    notes_intervals(Inversion, NotesIntevals),
+    nth0(0, NotesIntevals, I1),
+    nth0(1, NotesIntevals, I2),
+    N_1 #= mod(N_0 + I1, 7),
+    N_2 #= mod(N_0 + I2, 7),
     notes_nums(X_1, N_1),
     notes_nums(X_2, N_2),
     [C1, C2] = Chord2,
     note2abs(note(X_1, Alt1), C1),
     note2abs(note(X_2, Alt2), C2),
-    Chord3 = [note(X, Alt), note(X_1, Alt1), note(X_2, Alt2)],
-    permut(Chord3, Chord, Inversion).
+    Chord = [note(X, Alt), note(X_1, Alt1), note(X_2, Alt2)].
