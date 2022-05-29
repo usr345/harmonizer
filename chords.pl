@@ -31,8 +31,8 @@ note2abs(note(X, Alt), Out) :-
     Temp #< 25,
     Temp #> -1,
     Alt #< 11,
-    Alt #> -11,
-    pred1(Val, Out, Alt).
+    Alt #> -11.
+    %pred1(Val, Out, Alt).
 
 notes_nums('C', 0).
 notes_nums('D', 1).
@@ -73,3 +73,19 @@ chord3(note(X, Alt), Type, Inversion, Chord) :-
     note2abs(note(X_1, Alt1), C1),
     note2abs(note(X_2, Alt2), C2),
     Chord = [note(X, Alt), note(X_1, Alt1), note(X_2, Alt2)].
+
+allChords3(Note, Out) :-
+    chord3(Note, dim, 0, Chord1),
+    chord3(Note, dim, 1, Chord2),
+    chord3(Note, dim, 2, Chord3),
+    chord3(Note, min, 0, Chord4),
+    chord3(Note, min, 1, Chord5),
+    chord3(Note, min, 2, Chord6),
+    chord3(Note, maj, 0, Chord7),
+    chord3(Note, maj, 1, Chord8),
+    chord3(Note, maj, 2, Chord9),
+    chord3(Note, aug, 0, Chord10),
+    chord3(Note, aug, 1, Chord11),
+    chord3(Note, aug, 2, Chord12),
+    append([Chord1, Chord2, Chord3, Chord4, Chord5, Chord6, Chord7, Chord8, Chord9, Chord10, Chord11, Chord12], [], Out),
+    write(Out).
