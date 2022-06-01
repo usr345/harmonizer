@@ -1,11 +1,19 @@
-%-*- mode: prolog-*-
+%-*- mode: prolog -*-
 :- use_module(library(clpfd)).
 :- use_module(steps).
 
-intervals(dim, [[3, 6], [3, 9], [6, 9]]).
-intervals(min, [[3, 7], [4, 9], [5, 8]]).
-intervals(maj, [[4, 7], [3, 8], [5, 9]]).
-intervals(aug, [[4, 8], [4, 8], [4, 8]]).
+intervals(dim, 0, [3, 6]).
+intervals(dim, 1, [3, 9]).
+intervals(dim, 2, [6, 9]).
+intervals(min, 0, [3, 7]).
+intervals(min, 1, [4, 9]).
+intervals(min, 2, [5, 8]).
+intervals(maj, 0, [4, 7]).
+intervals(maj, 1, [3, 8]).
+intervals(maj, 2, [5, 9]).
+intervals(aug, 0, [4, 8]).
+intervals(aug, 1, [4, 8]).
+intervals(aug, 2, [4, 8]).
 
 notes_intervals(0, [2, 4]).
 notes_intervals(1, [2, 5]).
@@ -56,15 +64,12 @@ permut([X | T], List, N) :-
 chord3(note(X, Alt), Type, Inversion, Chord) :-
     Inversion #< 4,
     note2abs(note(X, Alt), Abs),
-    intervals(Type, IntervalsList),
-    nth0(Inversion, IntervalsList, Intervals),
+    intervals(Type, Inversion, Intervals),
     maplist(plus(Abs), Intervals, Chord1),
     maplist(mod12, Chord1, Chord2),
     notes_nums(X, N_0),
     % вычисляем дельты для нот
-    notes_intervals(Inversion, NotesIntevals),
-    nth0(0, NotesIntevals, I1),
-    nth0(1, NotesIntevals, I2),
+    notes_intervals(Inversion, [I1, I2]),
     N_1 #= mod(N_0 + I1, 7),
     N_2 #= mod(N_0 + I2, 7),
     notes_nums(X_1, N_1),
