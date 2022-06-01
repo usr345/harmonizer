@@ -79,18 +79,25 @@ chord3(note(X, Alt), Type, Inversion, Chord) :-
     note2abs(note(X_2, Alt2), C2),
     Chord = [note(X, Alt), note(X_1, Alt1), note(X_2, Alt2)].
 
-allChords3(Note, Out) :-
-    chord3(Note, dim, 0, Chord1),
-    chord3(Note, dim, 1, Chord2),
-    chord3(Note, dim, 2, Chord3),
-    chord3(Note, min, 0, Chord4),
-    chord3(Note, min, 1, Chord5),
-    chord3(Note, min, 2, Chord6),
-    chord3(Note, maj, 0, Chord7),
-    chord3(Note, maj, 1, Chord8),
-    chord3(Note, maj, 2, Chord9),
-    chord3(Note, aug, 0, Chord10),
-    chord3(Note, aug, 1, Chord11),
-    chord3(Note, aug, 2, Chord12),
-    append([Chord1, Chord2, Chord3, Chord4, Chord5, Chord6, Chord7, Chord8, Chord9, Chord10, Chord11, Chord12], [], Out),
-    write(Out).
+lc([], []).
+lc([H|T], [E|O]) :- lc(T, O), member(E, H).
+
+chord(Note, cord{chord: Chord, type: ChordType, inversion: Inversion}) :-
+    member(ChordType, [dim, min, maj, aug]),
+    member(Inversion, [0, 1, 2]),
+    chord3(Note, ChordType, Inversion, Chord).
+
+printChordsByTypes(_, []).
+printChordsByTypes(Note, [CT|ChordTypes]) :-
+    writeln(CT),
+    printChordsByInversions(Note, CT, [0, 1, 2]),
+    write("\n"),
+    printChordsByTypes(Note, ChordTypes).
+
+printChordsByInversions(_, _, []).
+printChordsByInversions(Note, CT, [I|IS]) :-
+  chord(Note, _{type: CT, inversion: I, chord: C}),
+  writeln(C),
+  printChordsByInversions(Note, CT, IS).
+
+printChords(Note) :- printChordsByTypes(Note, [dim, min, maj, aug]).
