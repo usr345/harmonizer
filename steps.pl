@@ -15,12 +15,13 @@ scales(maj_harm, [2, 2, 1, 2, 1, 3]).
 scales(min, [2, 1, 2, 2, 1, 2]).
 scales(min_harm, [2, 1, 2, 2, 1, 3]).
 
-%% большие интервалы - это большие интервалы, которые содержат два, четыре, девять или одиннадцать полутонов.
+%% большие интервалы - это интервалы, которые содержат два, четыре, девять или одиннадцать полутонов.
 %% малые интервалы — это интервалы, содержащие один, три, восемь или десять полутонов.
 %% чистые интервалы — это интервалы, содержащие 0, 5, 7 полутонов
 % ч - чистый интервал
 %% Уменьшенные интервалы - это интервалы, которые меньше, чем на один полутон от малого или чистого интервала.
 %% Увеличенные интервалы — это интервалы, которые более чем на один полутон отстоят от большого или совершенного интервала.
+
 % название, кол-во ступеней, кол-во полутонов, кол-во полутонов без учета октавы, кол-во ступеней чистое
 intervals(prima(ч), 0, 0, 0, 0).
 intervals(prima(ум), 0, 11, 11, 0).
@@ -60,7 +61,6 @@ intervals(septima(м), 6, 10, 10, 6).
 intervals(septima(б), 6, 11, 11, 6).
 intervals(septima(ув), 6, 0, 12, 6).
 
-% название, кол-во ступеней, кол-во полутонов, кол-во полутонов без учета октавы, кол-во ступеней чистое
 intervals(octava(ум), 0, 11, 11, 7).
 intervals(octava(ч), 0, 0, 12, 7).
 intervals(octava(ув), 0, 1, 13, 7).
@@ -75,13 +75,18 @@ intervals(decima(м), 2, 3, 15, 9).
 intervals(decima(б), 2, 4, 16, 9).
 intervals(decima(ув), 2, 5, 17, 9).
 
-
+% по русскому названию интервала возвращает
+% Name - его латинское название tertia(м), tertia(б)
+% Steps2 - количество ступеней в интервале
+% Semitones - кол-во полутонов в интервале
+% steps:rus_intervals(int(м, 2), Name, Steps2, Semitones).
+% Name = secunda(м),
+% Steps2 = Semitones, Semitones = 1 .
 rus_intervals(int(Type, Steps), Name, Steps2, Semitones) :- Steps #> 0,
                                                             Steps #< 11,
                                                             Steps1 #= Steps - 1,
-                                                            % Перебирает все возможные пары голосов
-                                                            % В T = [isBetter, [Tenor | TS]]
                                                             intervals(Name, Steps2, Semitones, _, Steps1),
+                                                            % =.. - превратить терм в список
                                                             Name =.. [_, Type].
 
 same(X, X).
@@ -127,6 +132,8 @@ build_scale1(Semitone, [X | XS], [Semitone | YS]) :- Temp #= X + Semitone,
                                                      build_scale1(Y, XS, YS).
 
 % Начальный полутон и тональность (maj, min) -> [note(X, Alt)]
+% ?- build_scale(0, maj, Scale).
+% Scale = [0, 2, 4, 5, 7, 9, 11] ;
 build_scale(Semitone, Scale, Out) :- scales(Scale, Deltas),
                                      build_scale1(Semitone, Deltas, Out).
 
@@ -143,8 +150,11 @@ letter_shift(A, Out) :- append([X, [A], Y], ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
 % [note('C', 0), note('C', 2), note('D', 2), note('D', 3), note('E', 3), note('C', -3), note('C', -1)]
 convert_scale(ValsSemi, Out) :- maplist(note_semitone, Out, ValsSemi).
 
+% Возвращает ноту без учета альтерации
 get_note(note(X, _), X).
 
+%% build_scale_human(note('G', 0), maj, Out).
+%% Out = [note('G', 0), note('A', 0), note('B', 0), note('C', 0), note('D', 0), note('E', 0), note('F', 1)]
 filter_scale(StartNote, Out) :- letter_shift(StartNote, Scale),
                                 maplist(get_note, Out, Scale).
 
@@ -153,11 +163,23 @@ build_scale_human(note(X, Alt), Scale, Out) :- filter_scale(X, Out),
                                                build_scale(Semitone, Scale, ValsSemi),
                                                convert_scale(ValsSemi, Out).
 
+% Проверка того, что нота находится в тональности
+% note(X, Alt) - проверяемая нота
+% NoteT - тоника тональности
+% Scale - наименование тональности
+note_in_scale(X, NoteT, Scale) :-
+    build_scale_human(NoteT, Scale, Out),
+    member(X, Out).
+
 % calc_intervals_numeric(note('C', 0), maj, 4, X, Y). - выдаст все пары нот, между которыми
-% существует интервал 4
-% Step - количество ступеней, для которых существует заданный интервал
-%% intervals(quinta(ч), 4, 7).
+% существует интервал 4 полутона
+% Note - тоника
+% Scale - лад
+% Interval - кол-во полутонов
+% Steps - количество ступеней, для которых существует заданный интервал
+% intervals(quinta(ч), 4, 7).
 calc_intervals_numeric(Note, Scale, Interval, Steps, Y, X) :- build_scale_human(Note, Scale, Out),
+
                                                               correct(Interval),
                                                               member(X, Out),
                                                               member(Y, Out),
@@ -185,3 +207,37 @@ calc_intervals(Note, Scale, Interval, Y, X) :-
 % calc_all_intervals_numeric(note('C', 0), maj, Interval, X, Y).
 calc_all_intervals_numeric(Note, Scale, Interval, Steps, Y, X) :- member(Interval, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]),
                                                                   calc_intervals_numeric(Note, Scale, Interval, Steps, Y, X).
+
+neighbour('C', 'D').
+neighbour('D', 'E').
+neighbour('E', 'F').
+neighbour('F', 'G').
+neighbour('G', 'A').
+neighbour('A', 'B').
+neighbour('B', 'C').
+
+tritons(Note, Scale, tri{note1: X, note2: Y}, solved_tri{note1: X1, note2: Y1}) :-
+
+    % уменьшенная квинта
+    calc_intervals_numeric(Note, Scale, 6, 4, X, Y),
+    get_note(X, XL),
+    get_note(Y, YL),
+    neighbour(XL, NextXL),
+    neighbour(PrevYL, YL),
+    note_in_scale(X1, Note, Scale),
+    note_in_scale(Y1, Note, Scale),
+    X1 = note(NextXL, Alt1),
+    Y1 = note(PrevYL, Alt2).
+
+tritons(Note, Scale, tri{note1: X, note2: Y}, solved_tri{note1: X1, note2: Y1}) :-
+
+    % увеличенная кварта
+    calc_intervals_numeric(Note, Scale, 6, 3, X, Y),
+    get_note(X, XL),
+    get_note(Y, YL),
+    neighbour(PrevXL, XL),
+    neighbour(YL, NextYL),
+    note_in_scale(X1, Note, Scale),
+    note_in_scale(Y1, Note, Scale),
+    X1 = note(PrevXL, Alt1),
+    Y1 = note(NextYL, Alt2).
