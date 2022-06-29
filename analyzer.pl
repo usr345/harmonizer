@@ -8,7 +8,7 @@
 getDef([], []).
 getDef([:- _ | I], O) :- getDef(I, O), !.
 getDef([D :- _ | I], [D | O]) :- getDef(I, O), !.
-getDef([D | I], [D | O]) :- getDef(I, O).
+getDef([D | I], O) :- getDef(I, O).
 
 sig(T, N/P) :- T =.. [N | A], length(A, P).
 

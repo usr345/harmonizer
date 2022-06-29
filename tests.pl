@@ -74,6 +74,19 @@ nearest_down_bass(N, Stage, X) :- nearest_down_bass(N, note(X, Stage)).
 test(test20, [note(5, 3), 1, [5, 4]], nearest_down_bass/2, multiset).
 test(test21, [note(5, 3), 3, [5, 4, 3]], nearest_down_bass/2, multiset).
 
+% altitude
+test(test21(1), [xnote(0, 'C', 0), 0], altitude/2, unique).
+test(test21(2), [xnote(0, 'C', 1), 1], altitude/2, unique).
+test(test21(3), [xnote(0, 'D', -1), 1], altitude/2, unique).
+test(test21(4), [xnote(2, 'C', 0), 24], altitude/2, unique).
+test(test21(5), [xnote(1, 'B', 1), 24], altitude/2, unique).
+test(test21(6), [xnote(1, 'G', -2), 17], altitude/2, unique).
+
+test(test21a, [In, Out], altitudes/2, unique) :-
+    findall(X, test(_, X, altitude/2, unique), List),
+    maplist(nth0(0), List, In),
+    maplist(nth0(1), List, Out).
+
 same_elements([], []).
 same_elements([X | XS], Y) :- append([A, [X], B], Y), % в Y-е встречается X?
                               append(A, B, Z),
@@ -89,8 +102,19 @@ test(test22_5, [[a], []], same_elements/2, negative).
 % 7 - тоника в G
 % далее идет мажорный лад лад
 % 12 - абсолютная величина ноты C 1-й октавы. В тональности G-maj 4 ступень 0-й октавы
-test(test25, [7, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)], 12, note(0, 4)], altitude2note/4, unique).
-test(test26, [7, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)], 6, note(-1, 7)], altitude2note/4, unique).
+test(test25(1), [7, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)], 12, note(0, 4)], altitude2note/4, unique).
+test(test25(2), [7, [stage(0,1), stage(2,2), stage(4, 3), stage(5, 4), stage(7, 5), stage(9, 6), stage(11, 7)], 6, note(-1, 7)], altitude2note/4, unique).
+
+test(test26, [In1, In2, In3, Out], altitudes2notes/4, unique) :-
+    findall(Y, test(_, Y, altitude2note/4, unique), List1),
+    member([In1, In2 | _], List1),
+    writeln(In1),
+    writeln(In2),
+    findall(X, test(_, [In1, In2 | X], altitude2note/4, unique), List),
+    maplist(nth0(0), List, In3),
+    writeln(In3),
+    maplist(nth0(1), List, Out).
+
 
 %% Предикаты, на которые есть тесты
 %predicates_tested(Module, Set) :- findall(P, (module_property(Module, exports(X)), member(P, X), test(_, _, P, _)), List),

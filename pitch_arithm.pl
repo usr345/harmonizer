@@ -4,6 +4,7 @@
 	nearest_down/2, nearest_down_bass/2,
 	nearests_down/2, nearests_down_bass/2,
     less_then_oct/2,
+    altitude/2,
 	altitudes/2,
 	notes_cmp/3,
 	notes_less_oct_arr/1,
@@ -64,7 +65,12 @@ shift('G', 7).
 shift('A', 9).
 shift('B', 11).
 
-altitude(xnote(O, N, A), H) :- shift(N, D), H #= (O * 12) + D + A.
+% Oct - октава
+% Name - буквенное имя ноты
+altitude(xnote(Oct, Name, Alt), Out) :-
+    shift(Name, D),
+    Out #= (Oct * 12) + D + Alt.
+
 altitudes([], []).
 altitudes([A|AS], [O|OS]) :- altitude(A, O), altitudes(AS, OS).
 
