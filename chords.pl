@@ -2,6 +2,8 @@
 :- use_module(library(clpfd)).
 :- use_module(steps).
 
+% Таблица (название типа, номер обращения, кол-во полутонов для вычисления следующей ноты)
+% второе число - это сумма следующего интервала с предыдущим.
 intervals(dim, 0, [3, 6]).
 intervals(dim, 1, [3, 9]).
 intervals(dim, 2, [6, 9]).
@@ -15,9 +17,40 @@ intervals(aug, 0, [4, 8]).
 intervals(aug, 1, [4, 8]).
 intervals(aug, 2, [4, 8]).
 
+% это дельты соотв. типа трезвучия для шкалы из 7 нот
+% C D E F G A B
+% 0 1 2 3 4 5 6
+% |   |   |
+% 2 - расстояние от C до E
+% 4 - расстояние от C до G
 notes_intervals(0, [2, 4]).
 notes_intervals(1, [2, 5]).
 notes_intervals(2, [3, 5]).
+
+sum_elements([], 0).
+sum_elements([X | Tail], Out) :-
+    sum_elements(Tail, Result),
+    Out #= X + Result.
+
+shift(0, X, X).
+shift(N, [X1 | Tail], Out) :-
+    N #\= 0,
+    sum_elements([X1 | Tail], Sum),
+    Last #= 12 - Sum,
+    append(Tail, [Last], Next),
+    M is N - 1,
+    shift(M, Next, Out).
+
+accum_intervals([], []).
+accum_intervals([X | Tail], [X | Out]) :-
+    accum_intervals(Tail, Result),
+    maplist(plus(X), Result, Out).
+
+notes_intervals4(0, [2, 4, 6]).
+notes_intervals4(1, [2, 4, 5]).
+notes_intervals4(2, [2, 3, 5]).
+notes_intervals4(3, [1, 3, 5]).
+
 
 mod12(In, Out) :-
     Out #= mod(In, 12).
@@ -58,23 +91,28 @@ permut([X | T], List, N) :-
     permut(List1, List, N1).
 
 % Вычисляет ноты, входящие в аккорд без учета тональности
-% None = note(X, Alt)
+% Note = note(X, Alt)
 % Type - тип аккорда: {dim, min, maj, aug}
 % Inversion - номер обращения (0, 1, 2)
 chord3(note(X, Alt), Type, Inversion, Chord) :-
     Inversion #< 4,
     note2abs(note(X, Alt), Abs),
+    % intervals - это таблица интервалов для аккорда соотв. типа
     intervals(Type, Inversion, Intervals),
     maplist(plus(Abs), Intervals, Chord1),
     maplist(mod12, Chord1, Chord2),
     notes_nums(X, N_0),
     % вычисляем дельты для нот
     notes_intervals(Inversion, [I1, I2]),
+    % номера 2-й и 3-й нот аккорда в семиэлеметной шкале
     N_1 #= mod(N_0 + I1, 7),
     N_2 #= mod(N_0 + I2, 7),
+    % преобразование из чисел в буквы
     notes_nums(X_1, N_1),
     notes_nums(X_2, N_2),
+    % унификация Chord2
     [C1, C2] = Chord2,
+    % Зная буквы для X_1 и X_2, вычисляем альтерации
     note2abs(note(X_1, Alt1), C1),
     note2abs(note(X_2, Alt2), C2),
     Chord = [note(X, Alt), note(X_1, Alt1), note(X_2, Alt2)].
