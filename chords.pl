@@ -19,6 +19,11 @@
 size_to_number(small, 3).
 size_to_number(big, 4).
 
+septima(9, "уменьшенный").
+septima(10, "малый").
+septima(11, "большой").
+septima(0, "увеличенный").
+
 intervals(dim, [3, 3]).
 intervals(min, [3, 4]).
 intervals(maj, [4, 3]).
@@ -28,6 +33,12 @@ intervals(sept(X, Size), Out) :-
     size_to_number(Size, N),
     intervals(X, Result),
     append(Result, [N], Out).
+
+intervals2(Result) :-
+    member(A, [3,4]),
+    member(B, [3,4]),
+    member(C, [3,4]),
+    Result = [A, B, C].
 
 % это дельты соотв. типа трезвучия для шкалы из 7 нот
 % C D E F G A B
