@@ -22,17 +22,22 @@ size_to_number(big, 4).
 septima(9, "уменьшенный").
 septima(10, "малый").
 septima(11, "большой").
-septima(0, "увеличенный").
+septima(12, "увеличенный").
+
+intervalsName(dim, "уменьшенный").
+intervalsName(min, "минорный").
+intervalsName(maj, "мажорный").
+intervalsName(aug, "увеличенный").
 
 intervals(dim, [3, 3]).
 intervals(min, [3, 4]).
 intervals(maj, [4, 3]).
 intervals(aug, [4, 4]).
 
-intervals(sept(X, Size), Out) :-
-    size_to_number(Size, N),
-    intervals(X, Result),
-    append(Result, [N], Out).
+%% intervals(sept(X, Size), Out) :-
+%%     size_to_number(Size, N),
+%%     intervals(X, Result),
+%%     append(Result, [N], Out).
 
 intervals2(Result) :-
     member(A, [3,4]),
@@ -78,25 +83,51 @@ notes_intervals4(3, [1, 3, 5]).
 mod12(In, Out) :-
     Out #= mod(In, 12).
 
-pred1(X, Out, Alt) :-
-    Out #< X,
-    Alt #< 0.
-
-pred1(X, Out, Alt) :-
-    Out #> X,
-    Alt #> 0.
+%% pred1(X, Out, Alt) :-
+%%     Out #< X,
+%%     Alt #< 0.
 
 pred1(X, X, 0).
 
-note2abs(note(X, Alt), Out) :-
+% При построении аккордов все альтерации > 0
+pred1(X, Out, Alt) :-
+    %% Out #> X,
+    Alt #> 0.
+
+note2abs12(note(X, Alt), Out) :-
     scale1(X, Val),
     Temp #= Val + Alt,
-    Out #= mod(Temp, 12),
     Temp #< 25,
-    Temp #> -1,
-    Alt #< 11,
-    Alt #> -11,
-    pred1(Val, Out, Alt).
+    Temp #> -25,
+    Alt #< 12,
+    Alt #> -12,
+    Out #= mod(Temp, 12).
+
+note2abs(note(X, Alt), Out) :-
+    scale1(X, Val),
+    Delta1 is Out - Val,
+    abs(Delta) == 0,
+    Alt is Delta1.
+
+note2abs(note(X, Alt), Out) :-
+    scale1(X, Val),
+    Delta1 is Out - Val,
+    Delta2 #= 12 - abs(Delta1),
+    abs(Delta2) #< abs(Delta1),
+    Alt is Delta2.
+
+note2abs(note(X, Alt), Out) :-
+    scale1(X, Val),
+    Delta1 is Out - Val,
+    Delta2 #= 12 - abs(Delta1),
+    abs(Delta1) #< abs(Delta2),
+    Alt is Delta1.
+
+note2abs(note(X, Alt), Out) :-
+    scale1(X, Val),
+    Delta1 is Out - Val,
+    abs(Delta) == 6,
+    Alt is Delta1.
 
 notes_nums('C', 0).
 notes_nums('D', 1).
@@ -137,13 +168,12 @@ chord3(note(X, Alt), Type, Inversion, Chord) :-
 
 % Вычисляет ноты, входящие в аккорд без учета тональности
 % Note = note(X, Alt)
-% Type - тип аккорда: {dim, min, maj, aug}
+% Deltas - массив дельт между нотами аккорда (малая / большая терции): [{3,4}, {3,4}, {3,4}]
 % Inversion - номер обращения (0, 1, 2)
-chord4(note(X, Alt), Type, Inversion, Chord) :-
-    Inversion #< 5,
-    note2abs(note(X, Alt), Abs),
-    % intervals - это таблица интервалов для аккорда соотв. типа
-    intervals(Type, Deltas),
+chord4(note(X, Alt), Deltas, Inversion, Chord) :-
+    Inversion #< 4,
+    % Вычисляем абсолютное значение ноты в 12 элементной шкале
+    note2abs12(note(X, Alt), Abs),
     shift(Inversion, Deltas, DeltasInverted),
     accum_intervals(DeltasInverted, Intervals),
     maplist(plus(Abs), Intervals, Chord1),
@@ -151,7 +181,7 @@ chord4(note(X, Alt), Type, Inversion, Chord) :-
     notes_nums(X, N_0),
     % вычисляем дельты для нот
     notes_intervals4(Inversion, [I1, I2, I3]),
-    % номера 2-й и 3-й нот аккорда в семиэлеметной шкале
+    % номера следующих нот аккорда в семиэлеметной шкале
     N_1 #= mod(N_0 + I1, 7),
     N_2 #= mod(N_0 + I2, 7),
     N_3 #= mod(N_0 + I3, 7),
@@ -161,14 +191,11 @@ chord4(note(X, Alt), Type, Inversion, Chord) :-
     notes_nums(X_3, N_3),
     % унификация Chord2
     [C1, C2, C3] = Chord2,
-    % Зная буквы для X_1 и X_2, вычисляем альтерации
+    % Зная буквы для X_1, X_2 и X_3, вычисляем альтерации
     note2abs(note(X_1, Alt1), C1),
     note2abs(note(X_2, Alt2), C2),
     note2abs(note(X_3, Alt3), C3),
     Chord = [note(X, Alt), note(X_1, Alt1), note(X_2, Alt2), note(X_3, Alt3)].
-
-lc([], []).
-lc([H|T], [E|O]) :- lc(T, O), member(E, H).
 
 chord(Note, cord{chord: Chord, type: ChordType, inversion: Inversion}) :-
     member(ChordType, [dim, min, maj, aug]),
@@ -189,17 +216,26 @@ printChordsByInversions(Note, CT, [I|IS]) :-
     printChordsByInversions(Note, CT, IS).
 
 printChords4ByInversions(_, _, []).
-printChords4ByInversions(Note, CT, [Inv|IS]) :-
-    chord4(Note, CT, Inv, Chord),
+printChords4ByInversions(Note, Deltas, [Inv|IS]) :-
+    chord4(Note, Deltas, Inv, Chord),
     writeln(Chord),
-    printChords4ByInversions(Note, CT, IS).
+    printChords4ByInversions(Note, Deltas, IS).
 
 printChords4ByTypes(_, []).
-printChords4ByTypes(Note, [CT|ChordTypes]) :-
-    writeln(CT),
-    printChords4ByInversions(Note, CT, [0, 1, 2, 3]),
-    write("\n"),
-    printChords4ByTypes(Note, ChordTypes).
+printChords4ByTypes(Note, [Delta|Tail]) :-
+    foldl(plus, Delta, 0, SumList),
+    septima(SumList, SeptType),
+    [X, Y, _] = Delta,
+    intervals(Interval, [X, Y]),
+    intervalsName(Interval, IntervalName),
+    string_concat(SeptType, " ", Text),
+    string_concat(Text, IntervalName, Text1),
+    writeln(Text1),
+
+    printChords4ByInversions(Note, Delta, [0, 1, 2, 3]),
+    printChords4ByTypes(Note, Tail).
 
 printChords(Note) :- printChordsByTypes(Note, [dim, min, maj, aug]).
-printChords4(Note) :- printChords4ByTypes(Note, [sept(dim, small), sept(dim, big), sept(min, small), sept(min, big), sept(maj, small), sept(maj, big), sept(aug, small), sept(aug, big)]).
+printChords4(Note) :-
+    findall(X, intervals2(X), Deltas),
+    printChords4ByTypes(Note, Deltas).
