@@ -105,29 +105,30 @@ note2abs12(note(X, Alt), Out) :-
 
 note2abs(note(X, Alt), Out) :-
     scale1(X, Val),
-    Delta1 is Out - Val,
-    abs(Delta) == 0,
-    Alt is Delta1.
+    Delta is Out - Val,
+    Delta = 0,
+    Alt = 0.
 
 note2abs(note(X, Alt), Out) :-
     scale1(X, Val),
     Delta1 is Out - Val,
     Delta2 #= 12 - abs(Delta1),
-    abs(Delta2) #< abs(Delta1),
-    Alt is Delta2.
+    Delta2 #< abs(Delta1),
+    Alt = Delta2.
 
 note2abs(note(X, Alt), Out) :-
     scale1(X, Val),
     Delta1 is Out - Val,
     Delta2 #= 12 - abs(Delta1),
-    abs(Delta1) #< abs(Delta2),
-    Alt is Delta1.
+    ; Delta2 всегда > 0
+    abs(Delta1) #< Delta2,
+    Alt = Delta1.
 
 note2abs(note(X, Alt), Out) :-
     scale1(X, Val),
-    Delta1 is Out - Val,
+    Delta is Out - Val,
     abs(Delta) == 6,
-    Alt is Delta1.
+    Alt is Delta.
 
 notes_nums('C', 0).
 notes_nums('D', 1).
