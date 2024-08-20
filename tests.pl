@@ -6,6 +6,7 @@
 :- use_module(pitch_arithm).
 :- use_module(harm).
 :- use_module(utility).
+% discontiguous - Informs the system that the clauses of the specified predicate(s) might not be together in the source file.
 :- discontiguous(run_test/1).
 :- discontiguous(test/4).
 :- discontiguous(test_harm/1).

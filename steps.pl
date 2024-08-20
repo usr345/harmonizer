@@ -1,5 +1,5 @@
 %-*- mode: prolog-*-
-:- module(steps, [scale1/2]).
+:- module(steps, [scale1/2, scales/2, letter_num/2, note_semitone/2, build_scale/3, convert_scale/2, build_scale_human/3]).
 :- use_module(library(clpfd)).
 
 scale1('C', 0).
@@ -153,11 +153,12 @@ convert_scale(ValsSemi, Out) :- maplist(note_semitone, Out, ValsSemi).
 % Возвращает ноту без учета альтерации
 get_note(note(X, _), X).
 
-%% build_scale_human(note('G', 0), maj, Out).
-%% Out = [note('G', 0), note('A', 0), note('B', 0), note('C', 0), note('D', 0), note('E', 0), note('F', 1)]
 filter_scale(StartNote, Out) :- letter_shift(StartNote, Scale),
                                 maplist(get_note, Out, Scale).
 
+% Получить список нот, входящих в данную тональность
+%% build_scale_human(note('G', 0), maj, Out).
+%% Out = [note('G', 0), note('A', 0), note('B', 0), note('C', 0), note('D', 0), note('E', 0), note('F', 1)]
 build_scale_human(note(X, Alt), Scale, Out) :- filter_scale(X, Out),
                                                note_semitone(note(X, Alt), Semitone),
                                                build_scale(Semitone, Scale, ValsSemi),

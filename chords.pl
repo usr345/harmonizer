@@ -1,4 +1,9 @@
 %-*- mode: prolog -*-
+%-*- mode: prolog-*-
+:- module(pitch_arithm, [
+     sum_elements/2,
+     shift/3]).
+
 :- use_module(library(clpfd)).
 :- use_module(steps).
 
@@ -103,32 +108,46 @@ note2abs12(note(X, Alt), Out) :-
     Alt #> -12,
     Out #= mod(Temp, 12).
 
-note2abs(note(X, Alt), Out) :-
-    scale1(X, Val),
-    Delta is Out - Val,
-    Delta = 0,
-    Alt = 0.
+%% note2abs(note(X, Alt), Out) :-
+%%     scale1(X, Val),
+%%     Delta is Out - Val,
+%%     Delta = 0,
+%%     Alt = 0.
+
+%% note2abs(note(X, Alt), Out) :-
+%%     scale1(X, Val),
+%%     Delta1 is Out - Val,
+%%     Delta2 #= 12 - abs(Delta1),
+%%     Delta2 #< abs(Delta1),
+%%     Alt is Delta2.
+
+%% note2abs(note(X, Alt), Out) :-
+%%     scale1(X, Val),
+%%     Delta1 is Out - Val,
+%%     Delta2 #= 12 - abs(Delta1),
+%%     % Delta2 всегда > 0
+%%     abs(Delta1) #< Delta2,
+%%     Alt is Delta1.
+
+%% note2abs(note(X, Alt), Out) :-
+%%     scale1(X, Val),
+%%     Delta is Out - Val,
+%%     abs(Delta) == 6,
+%%     Alt is Delta.
+
+solve(X, Y, Z) :-
+    X #> -1,
+    X #< 12,
+    Y #> -12,
+    Y #< 12,
+    Z #> -1,
+    Z #< 12,
+    Z #= mod(X + Y, 12).
 
 note2abs(note(X, Alt), Out) :-
     scale1(X, Val),
-    Delta1 is Out - Val,
-    Delta2 #= 12 - abs(Delta1),
-    Delta2 #< abs(Delta1),
-    Alt = Delta2.
-
-note2abs(note(X, Alt), Out) :-
-    scale1(X, Val),
-    Delta1 is Out - Val,
-    Delta2 #= 12 - abs(Delta1),
-    ; Delta2 всегда > 0
-    abs(Delta1) #< Delta2,
-    Alt = Delta1.
-
-note2abs(note(X, Alt), Out) :-
-    scale1(X, Val),
-    Delta is Out - Val,
-    abs(Delta) == 6,
-    Alt is Delta.
+    solve(Val, Alt, Out),
+    once(labeling([min(abs(Alt))], [Alt])).
 
 notes_nums('C', 0).
 notes_nums('D', 1).
